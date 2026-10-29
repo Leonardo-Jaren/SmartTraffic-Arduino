@@ -73,6 +73,7 @@ Las pruebas de navegador arrancan Django y Vite; detén antes servidores que use
 
 - [Análisis de la maqueta y mapa](docs/ANALISIS_MAQUETA.md)
 - [Electrónica y tabla de conexiones](docs/ELECTRONICA.md)
+- [Guía visual PDF para soldar y conectar los seis semáforos](docs/GUIA_VISUAL_CONEXIONES_ARDUINO.pdf)
 - [Código completo para Arduino IDE](docs/CODIGO_ARDUINO.md)
 - [Arquitectura, protocolo y modos](docs/ARQUITECTURA.md)
 - [Pruebas y limitaciones](docs/PRUEBAS.md)

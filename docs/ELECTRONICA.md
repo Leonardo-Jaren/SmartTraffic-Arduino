@@ -1,5 +1,7 @@
 # Electrónica: seis semáforos con LEDs individuales
 
+La guía ilustrada paso a paso está en [GUIA_VISUAL_CONEXIONES_ARDUINO.pdf](GUIA_VISUAL_CONEXIONES_ARDUINO.pdf). Incluye el mapa de los seis cruces, las 18 conexiones, pruebas y el firmware.
+
 ## Capacidad del UNO R3
 
 Seis semáforos × tres luces = **18 salidas**. Un UNO R3 dispone de D0–D13 y A0–A5, que también pueden usarse como digitales. La comunicación USB serial comparte D0/RX y D1/TX; reservarlos deja D2–D13 (12) + A0–A5 (6) = **18 salidas exactas**. A4/A5 también son SDA/SCL y dejan de estar disponibles para I²C. D13 comparte el LED integrado de la placa.
@@ -36,3 +38,5 @@ Esta propuesta es para LEDs indicadores pequeños de dos patas, con corriente ba
 ## Señalización de cruces
 
 El usuario confirmó que la vía perpendicular sin semáforo tendrá una señal de **ceda el paso**. Esto no impone eléctricamente el comportamiento de los vehículos: debe respetarse en la maqueta. Para controlar físicamente ambos movimientos con luces independientes se necesitan semáforos adicionales y una expansión de salidas. La aplicación permite añadir semáforos **virtuales**, pero no crea salidas físicas.
+
+Con la asignación actual `EJE = {H,H,H,H,H,H}`, los seis focos controlan las horizontales. Durante las fases del programa reservadas al eje V, todos los LEDs físicos permanecen rojos; el ceda es pasivo y no hay verde vertical. Esta secuencia exacta está descrita en la guía. Si el diseño necesita mostrar verde físico en una vía secundaria, habrá que cambiar la distribución de señales y verificar una nueva lógica segura antes de habilitar el mapa.

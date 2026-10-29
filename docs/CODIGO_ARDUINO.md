@@ -220,7 +220,7 @@ D0/D1 se reservan para USB serial. Cada pin va al ánodo (+) del LED correspondi
 
 El sketch ya trae `CRUCE = {1,2,3,4,5,6}` y `EJE = {H,H,H,H,H,H}` como diseño inicial: S1–S6 corresponden a I1–I6 y controlan H1/H2. Coloca cada semáforo mirando a los vehículos de la vía horizontal e instala las señales de ceda el paso en las verticales. Verifica uno a uno los LEDs y el cableado de la tabla. Después cambia `MAPA_CONFIRMADO` de `false` a `true` y vuelve a cargar el sketch. El programa empieza con un intervalo de todo rojo. Si decides que algún semáforo controle una vertical, ajusta su `EJE` a `V` y revisa el cruce. El ceda el paso no controla eléctricamente el movimiento perpendicular.
 
-La fase física es global: horizontal verde, amarillo, todo rojo, vertical verde, amarillo, todo rojo. La principal recibe más tiempo, pero no hay medición ni offsets físicos que permitan afirmar una ola verde. La simulación web usa fases virtuales independientes y una escala supuesta.
+La fase programada es global: horizontal verde, amarillo y rojo; después se reserva un intervalo para V y otro de todo rojo. **Con `EJE = {H,H,H,H,H,H}` ninguno de los seis focos representa la vertical**, así que durante las fases V los seis LEDs físicos siguen rojos. El ceda es una señal pasiva, no un estado luminoso controlado por Arduino. No hay medición ni offsets físicos para afirmar una ola verde. La simulación web usa fases virtuales independientes y una escala supuesta. Consulta la [guía visual de conexiones](GUIA_VISUAL_CONEXIONES_ARDUINO.pdf).
 
 ## Protocolo y cambios de tiempo
 
