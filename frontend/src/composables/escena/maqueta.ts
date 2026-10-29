@@ -1,6 +1,9 @@
 import * as THREE from 'three'
 import { CRUCES, DISTANCIA_LINEA_CRUCE, NODOS, TRAMOS } from '../simulacion/mapa'
 
+// El tablero físico declarado mide 160 × 120 cm; el eje Y conserva la escala horizontal.
+export const ESCALA_MAQUETA = { x: 1.6 / 21, y: 1.6 / 21, z: 1.2 / 17 }
+
 function caja(ancho: number, alto: number, fondo: number, color: number) {
   return new THREE.Mesh(new THREE.BoxGeometry(ancho, alto, fondo), new THREE.MeshStandardMaterial({ color }))
 }
@@ -64,7 +67,7 @@ function crearArbol(x: number, z: number) {
   return [tronco, copa, copaSuperior]
 }
 
-function crearBordes(tramo: (typeof TRAMOS)[number], escena: THREE.Scene) {
+function crearBordes(tramo: (typeof TRAMOS)[number], escena: THREE.Group) {
   const a = NODOS[tramo.de]!
   const b = NODOS[tramo.hacia]!
   const dx = (b.x - a.x) / tramo.longitud
@@ -93,7 +96,7 @@ function crearBordes(tramo: (typeof TRAMOS)[number], escena: THREE.Scene) {
   }
 }
 
-function decorarPlaza(escena: THREE.Scene) {
+function decorarPlaza(escena: THREE.Group) {
   const plaza = caja(4.2, 0.04, 5.2, 0x8dc697)
   plaza.position.set(3, 0.19, 0)
   const caminoHorizontal = caja(3.9, 0.02, 0.32, 0xdce2d1)
@@ -125,7 +128,7 @@ function decorarPlaza(escena: THREE.Scene) {
   }
 }
 
-function pintarFlecha(tramo: (typeof TRAMOS)[number], escena: THREE.Scene) {
+function pintarFlecha(tramo: (typeof TRAMOS)[number], escena: THREE.Group) {
   const a = NODOS[tramo.de]!
   const b = NODOS[tramo.hacia]!
   const dx = (b.x - a.x) / tramo.longitud
@@ -150,7 +153,7 @@ function pintarFlecha(tramo: (typeof TRAMOS)[number], escena: THREE.Scene) {
   escena.add(flecha)
 }
 
-function crearPaso(x: number, z: number, horizontal: boolean, escena: THREE.Scene) {
+function crearPaso(x: number, z: number, horizontal: boolean, escena: THREE.Group) {
   for (let i = -2; i <= 2; i++) {
     const franja = caja(horizontal ? 0.16 : 0.27, 0.02, horizontal ? 0.27 : 0.16, 0xf6f5ed)
     franja.position.set(x + (horizontal ? 0 : i * 0.31), 0.242, z + (horizontal ? i * 0.31 : 0))
@@ -158,7 +161,7 @@ function crearPaso(x: number, z: number, horizontal: boolean, escena: THREE.Scen
   }
 }
 
-function crearLineaDetencion(tramo: (typeof TRAMOS)[number], escena: THREE.Scene) {
+function crearLineaDetencion(tramo: (typeof TRAMOS)[number], escena: THREE.Group) {
   if (NODOS[tramo.hacia]!.tipo !== 'cruce') return
   const a = NODOS[tramo.de]!
   const b = NODOS[tramo.hacia]!
@@ -172,7 +175,8 @@ function crearLineaDetencion(tramo: (typeof TRAMOS)[number], escena: THREE.Scene
   escena.add(linea)
 }
 
-export function crearMaqueta(escena: THREE.Scene) {
+export function crearMaqueta(escena: THREE.Group) {
+  escena.scale.set(ESCALA_MAQUETA.x, ESCALA_MAQUETA.y, ESCALA_MAQUETA.z)
   const seleccionables: THREE.Object3D[] = []
   const calles = new Map<string, THREE.Mesh>()
   const cruces = new Map<string, THREE.Mesh>()

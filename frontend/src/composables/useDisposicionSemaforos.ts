@@ -2,7 +2,7 @@ import { computed, ref, watch, type Ref } from 'vue'
 import type { Esquina, Seleccion, UbicacionSemaforo } from '@/types/trafico'
 import { obtenerRotacionSemaforo, SEMAFOROS_BASE } from './simulacion/mapa'
 
-const CLAVE = 'smarttraffic.ubicaciones.v1'
+const CLAVE = 'smarttraffic.ubicaciones.v2'
 export const ESQUINAS: Record<Esquina, { x: number; z: number }> = {
   NO: { x: -1.35, z: -1.35 },
   NE: { x: 1.35, z: -1.35 },

@@ -2,7 +2,7 @@
 
 Sistema educativo para explorar una maqueta de seis intersecciones, simular vehículos y consultar un Arduino UNO por USB. El frontend usa Vue 3, Vite y Three.js; la API y el puente local usan Django REST Framework y pySerial.
 
-La maqueta 3D es una **aproximación** basada en las fotos. Las direcciones H1 ←, H2 →, V1 ↑, V2 ↓ y V3 ↑ fueron confirmadas. Se representan seis semáforos, uno en cada cruce: S1→I1, S2→I2, S3→I3, S4→I4, S5→I5 y S6→I6. Como diseño inicial, los seis regulan las vías horizontales y las verticales tienen **ceda el paso**, según indicó el usuario. Los puntos rojos no muestran con certeza hacia dónde mira cada luz: hay que orientar y comprobar el montaje con este criterio. El sketch arranca en rojo hasta verificar el cableado.
+La maqueta física mide **160 × 120 cm** según indicó el usuario; el tablero 3D se ajusta a ese tamaño. La distribución interna sigue siendo una **aproximación** basada en las fotos. Las direcciones H1 ←, H2 →, V1 ↑, V2 ↓ y V3 ↑ fueron confirmadas. Se representan seis semáforos, uno en cada cruce: S1→I1, S2→I2, S3→I3, S4→I4, S5→I5 y S6→I6, ubicados según los seis puntos rojos. Como diseño inicial, los seis regulan las vías horizontales y las verticales tienen **ceda el paso**, según indicó el usuario. Los puntos rojos no confirman hacia dónde mira cada luz; hay que comprobar su orientación en el montaje. El sketch arranca en rojo hasta verificar el cableado.
 
 ## Requisitos
 
@@ -40,7 +40,7 @@ Usa **Pantalla completa** sobre la maqueta para ampliar la vista y conservar los
 
 Selecciona S1–S6 en el modelo o en su tarjeta para cambiar su esquina dentro del cruce y girarlo en pasos de 90°. La distribución visual se guarda en este navegador y puede restaurarse. Estos movimientos no cambian el cruce asignado, los colores, la vía que controla el semáforo ni los pines del Arduino. Un traslado a otro cruce requiere revisar también esa asignación lógica y el montaje físico.
 
-La escala de cálculo es **1 unidad 3D = 5 metros simulados**. Por ejemplo, a 30 km/h se recorren 8,33 m/s, es decir 1,67 unidades 3D/s. Es una escala de simulación, no una medida de la maqueta real. Los desfases horizontales usan 30 km/h como velocidad objetivo virtual; no se ha validado una ola verde física.
+La escala de cálculo es **1 unidad 3D = 5 metros simulados**. Por ejemplo, a 30 km/h se recorren 8,33 m/s, es decir 1,67 unidades 3D/s. Esta conversión de velocidad es independiente del tamaño visual del tablero de 160 × 120 cm. Los desfases horizontales usan 30 km/h como velocidad objetivo virtual; no se ha validado una ola verde física.
 
 ## Conectar un Arduino por USB
 

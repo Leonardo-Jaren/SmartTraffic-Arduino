@@ -11,7 +11,7 @@ import type {
   UbicacionSemaforo,
 } from '@/types/trafico'
 import { crearDinamicos } from './escena/dinamicos'
-import { crearMaqueta } from './escena/maqueta'
+import { crearMaqueta, ESCALA_MAQUETA } from './escena/maqueta'
 
 interface EstadoEscena {
   vehiculos: Vehiculo[]
@@ -40,8 +40,10 @@ export function useEscena3D(
     try {
       const escena = new THREE.Scene()
       escena.background = new THREE.Color(0xe8efe9)
+      const grupoMaqueta = new THREE.Group()
+      escena.add(grupoMaqueta)
       const camara = new THREE.PerspectiveCamera(38, 1, 0.1, 150)
-      camara.position.set(16, 21, 24)
+      camara.position.set(14.4 * ESCALA_MAQUETA.x, 18.9 * ESCALA_MAQUETA.y, 21.6 * ESCALA_MAQUETA.z)
       const renderizador = new THREE.WebGLRenderer({ antialias: true })
       renderizador.setPixelRatio(Math.min(window.devicePixelRatio, 2))
       renderizador.outputColorSpace = THREE.SRGBColorSpace
@@ -52,29 +54,30 @@ export function useEscena3D(
       elemento.appendChild(renderizador.domElement)
       escena.add(new THREE.HemisphereLight(0xe4f0ff, 0x6f8d79, 1.8))
       const sol = new THREE.DirectionalLight(0xffeed2, 3)
-      sol.position.set(-8, 18, 12)
+      sol.position.set(-0.61, 1.37, 0.91)
       sol.castShadow = true
       const resolucionSombra = window.innerWidth < 700 ? 512 : 1024
       sol.shadow.mapSize.set(resolucionSombra, resolucionSombra)
-      Object.assign(sol.shadow.camera, { left: -17, right: 17, top: 17, bottom: -17, near: 1, far: 65 })
+      Object.assign(sol.shadow.camera, { left: -1.35, right: 1.35, top: 1.3, bottom: -1.3, near: 0.1, far: 4.5 })
+      sol.shadow.camera.updateProjectionMatrix()
       sol.shadow.bias = -0.001
-      sol.shadow.normalBias = 0.03
+      sol.shadow.normalBias = 0.005
       escena.add(sol)
       const controles = new OrbitControls(camara, renderizador.domElement)
       controles.target.set(0, 0, 0)
       controles.enableDamping = true
-      controles.minDistance = 15
-      controles.maxDistance = 58
+      controles.minDistance = 1.15
+      controles.maxDistance = 4.5
       controles.maxPolarAngle = Math.PI / 2.1
       controles.update()
-      const maqueta = crearMaqueta(escena)
-      escena.traverse((objeto) => {
+      const maqueta = crearMaqueta(grupoMaqueta)
+      grupoMaqueta.traverse((objeto) => {
         if (objeto instanceof THREE.Mesh) {
           objeto.castShadow = objeto.userData.proyectaSombra === true
           objeto.receiveShadow = objeto.userData.recibeSombra === true
         }
       })
-      const dinamicos = crearDinamicos(escena, maqueta)
+      const dinamicos = crearDinamicos(grupoMaqueta, maqueta)
       const rayo = new THREE.Raycaster()
       const puntero = new THREE.Vector2()
       let inicioX = 0

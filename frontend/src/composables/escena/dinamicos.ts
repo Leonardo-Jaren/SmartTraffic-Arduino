@@ -181,7 +181,7 @@ function obtenerPosicionVehiculo(vehiculo: Vehiculo, tramo: NonNullable<ReturnTy
   }
 }
 
-export function crearDinamicos(escena: THREE.Scene, maqueta: ReturnType<typeof crearMaqueta>) {
+export function crearDinamicos(escena: THREE.Group, maqueta: ReturnType<typeof crearMaqueta>) {
   const autos = new Map<number, THREE.Group>()
   const luces = new Map<number, ReturnType<typeof crearSemaforo>>()
   const semaforos = SEMAFOROS_BASE.map((datos) => {
@@ -196,22 +196,6 @@ export function crearDinamicos(escena: THREE.Scene, maqueta: ReturnType<typeof c
     maqueta.seleccionables.push(semaforo.grupo)
     return semaforo
   })
-  // V se representa con luces virtuales durante la simulación; no confirma hardware instalado.
-  const semaforosVerticales = SEMAFOROS_BASE.map((datos) => {
-    const semaforo = crearSemaforo()
-    const nodo = NODOS[datos.cruce]!
-    semaforo.grupo.position.set(
-      nodo.x + (datos.dx < 0 ? 1.35 : -1.35),
-      0.2,
-      nodo.z + (datos.dz < 0 ? 1.35 : -1.35),
-    )
-    semaforo.grupo.rotation.y = obtenerRotacionSemaforo(datos.cruce, 'vertical')
-    semaforo.grupo.scale.setScalar(0.82)
-    semaforo.grupo.visible = false
-    escena.add(semaforo.grupo)
-    return semaforo
-  })
-
   function actualizar(
     vehiculos: Vehiculo[],
     fases: FaseCruce[],
@@ -234,19 +218,6 @@ export function crearDinamicos(escena: THREE.Scene, maqueta: ReturnType<typeof c
         semaforo.grupo.rotation.y = (ubicacion.giro * Math.PI) / 180
       }
       colorearSemaforo(semaforo, obtenerColorSemaforo(indice, modo, fases, dispositivo))
-    })
-    semaforosVerticales.forEach((semaforo, indice) => {
-      const datos = SEMAFOROS_BASE[indice]!
-      const fase = fases.find((actual) => actual.id === datos.cruce)
-      const ubicacion = ubicaciones.find((actual) => actual.id === datos.id)
-      if (ubicacion) {
-        const nodo = NODOS[datos.cruce]!
-        const esquina = ESQUINAS[ubicacion.esquina]
-        semaforo.grupo.position.set(nodo.x - esquina.x, 0.2, nodo.z - esquina.z)
-      }
-      const existeLuzVertical = virtuales.some((luz) => luz.cruce === datos.cruce && luz.eje === 'vertical')
-      semaforo.grupo.visible = modo === 'simulacion' && !existeLuzVertical
-      colorearSemaforo(semaforo, modo === 'simulacion' ? (fase?.vertical ?? null) : null)
     })
     for (const [id, calle] of maqueta.calles) {
       pintar(

@@ -8,7 +8,7 @@ Comprobaciones realizadas en este entorno:
 - Puente serial: prueba de extremo a extremo con PTY, simulador identificado, `CONFIG`, `ACK` y desconexión; se usó una base SQLite temporal.
 - Firmware: compilado y enlazado para ATmega328P con el núcleo Arduino AVR y GCC AVR de Debian; 4.672 bytes de programa y 422 bytes de datos estáticos con el mapa bloqueado. Una prueba nativa con reloj y GPIO simulados verificó el bloqueo, prueba individual de LED, el mapa horizontal, fases H/V mixtas sin verdes incompatibles y ACK/rechazo.
 
-No se conectó un UNO físico ni se midieron tensiones, resistencias, LED, brillo o funcionamiento en la maqueta. La forma, escala y posiciones exactas de los semáforos no son mediciones. El sketch deja preparado el mapa S1–S6 de las horizontales, pero inicia bloqueado para comprobar el cableado; ceder el paso no se puede imponer eléctricamente con un único semáforo. No se probó hardware real, Wi-Fi ESP32 ni despliegue remoto.
+No se conectó un UNO físico ni se midieron tensiones, resistencias, LED, brillo o funcionamiento en la maqueta. El tamaño exterior de 160 × 120 cm es un dato del usuario; las calles y edificios internos y la escala de velocidad no se midieron. El sketch deja preparado el mapa S1–S6 de las horizontales, pero inicia bloqueado para comprobar el cableado; ceder el paso no se puede imponer eléctricamente con un único semáforo. No se probó hardware real, Wi-Fi ESP32 ni despliegue remoto.
 
 El build pasa con un aviso de Vite por el tamaño del módulo 3D: aproximadamente 590 kB minificados (149 kB comprimidos). Se carga de forma diferida, pero podría optimizarse más para conexiones móviles lentas.
 
