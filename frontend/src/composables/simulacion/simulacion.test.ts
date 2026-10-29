@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { EstadoDispositivo, FaseCruce, Vehiculo } from '@/types/trafico'
 import { calcularFase, TIEMPOS_INICIALES, validarTiempos } from './luces'
-import { NODOS, SEMAFOROS_BASE, TRAMOS } from './mapa'
+import { CRUCES, NODOS, SEMAFOROS_BASE, TRAMOS, obtenerRotacionSemaforo } from './mapa'
 import { analizarImpactos, calcularRuta } from './rutas'
 import { obtenerColorSemaforo } from './semaforos'
 import { avanzarVehiculos } from './vehiculos'
@@ -45,6 +45,17 @@ describe('sentidos y rutas', () => {
       if (tramo.calle === 'V2') expect(b.z).toBeGreaterThan(a.z)
     }
   })
+  it('orienta las seis caras contra el flujo de la vía que vigilan', () => {
+    for (const semaforo of SEMAFOROS_BASE) {
+      const entrada = TRAMOS.find((tramo) => tramo.hacia === semaforo.cruce && tramo.eje === semaforo.eje)!
+      const origen = NODOS[entrada.de]!
+      const destino = NODOS[entrada.hacia]!
+      const giro = obtenerRotacionSemaforo(semaforo.cruce, semaforo.eje)
+      const producto =
+        (Math.sin(giro) * (destino.x - origen.x) + Math.cos(giro) * (destino.z - origen.z)) / entrada.longitud
+      expect(producto, semaforo.id).toBeCloseTo(-1, 8)
+    }
+  })
   it('no atraviesa el tramo cerrado y muestra los recorridos afectados', () => {
     const cierres = new Set(['H1-2'])
     const ruta = calcularRuta('H1E', 'H1O', cierres)
@@ -54,7 +65,7 @@ describe('sentidos y rutas', () => {
 })
 
 describe('fases seguras', () => {
-  it('muestra la fase horizontal o el dato reciente del dispositivo según el modo', () => {
+  it('muestra el eje de cada luz del croquis o el dato reciente del dispositivo según el modo', () => {
     const dispositivo: EstadoDispositivo = {
       fuente: 'arduino',
       conectado: true,
@@ -66,7 +77,25 @@ describe('fases seguras', () => {
       tiempos_confirmados: null,
       ultimo_comando: null,
     }
-    expect(obtenerColorSemaforo(2, 'simulacion', fase('amarillo', 'rojo'), dispositivo)).toBe('amarillo')
+    const faseH: FaseCruce[] = CRUCES.map((id) => ({ id, horizontal: 'verde', vertical: 'rojo', restante: 4 }))
+    const faseV: FaseCruce[] = CRUCES.map((id) => ({ id, horizontal: 'rojo', vertical: 'verde', restante: 4 }))
+    expect(SEMAFOROS_BASE.map((_, i) => obtenerColorSemaforo(i, 'simulacion', faseH, dispositivo))).toEqual([
+      'rojo',
+      'verde',
+      'rojo',
+      'verde',
+      'rojo',
+      'verde',
+    ])
+    expect(SEMAFOROS_BASE.map((_, i) => obtenerColorSemaforo(i, 'simulacion', faseV, dispositivo))).toEqual([
+      'verde',
+      'rojo',
+      'verde',
+      'rojo',
+      'verde',
+      'rojo',
+    ])
+    expect(obtenerColorSemaforo(2, 'simulacion', fase('rojo', 'amarillo'), dispositivo)).toBe('amarillo')
     expect(obtenerColorSemaforo(2, 'dispositivo', fase('rojo', 'verde'), dispositivo)).toBe('verde')
     dispositivo.conectado = false
     expect(obtenerColorSemaforo(2, 'dispositivo', fase('verde', 'rojo'), dispositivo)).toBeNull()

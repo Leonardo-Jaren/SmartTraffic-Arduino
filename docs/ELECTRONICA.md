@@ -1,6 +1,6 @@
 # Electrónica: seis semáforos con LEDs individuales
 
-La guía ilustrada paso a paso está en [GUIA_VISUAL_CONEXIONES_ARDUINO.pdf](GUIA_VISUAL_CONEXIONES_ARDUINO.pdf). Incluye el mapa de los seis cruces, las 18 conexiones, pruebas y el firmware.
+La guía ilustrada paso a paso está en [GUIA_VISUAL_CONEXIONES_ARDUINO.pdf](GUIA_VISUAL_CONEXIONES_ARDUINO.pdf). Incluye las 18 conexiones, pruebas y el firmware. Sus ilustraciones de orientación corresponden al diseño anterior con todos los ejes H; para las posiciones y caras del croquis actualizado consulta [el mapa de la maqueta](ANALISIS_MAQUETA.md). La guía PDF no se ha regenerado con esas nuevas orientaciones.
 
 ## Capacidad del UNO R3
 
@@ -10,7 +10,7 @@ Por tanto, para estos 18 LEDs indicadores no hacen falta 74HC595. No queda un pi
 
 ## Tabla eléctrica propuesta
 
-Cada S identifica un semáforo y sus tres pines. Para el montaje se propone S1 en I1, S2 en I2, S3 en I3, S4 en I4, S5 en I5 y S6 en I6, todos orientados hacia las vías horizontales. Confirma esa orientación al instalar: no es visible con certeza en los puntos rojos. Conecta el ánodo de cada LED al pin indicado y su cátodo mediante una resistencia propia de 2,2 kΩ a GND.
+Cada S identifica un semáforo y sus tres pines. El mapa visual coloca S1 en I1, S2 en I2, S3 en I3, S4 en I4, S5 en I5 y S6 en I6. Las flechas rojas del croquis indican caras hacia sur, este, sur, oeste, norte y oeste, respectivamente: S1/S3/S5 vigilan el eje V y S2/S4/S6 el H. La correspondencia de los grupos de pines con los seis semáforos del montaje todavía debe comprobarse. Conecta el ánodo de cada LED al pin indicado y su cátodo mediante una resistencia propia de 2,2 kΩ a GND.
 
 | Semáforo | Cruce propuesto | Rojo (+) | Amarillo (+) | Verde (+) | Cada cátodo (−) |
 |---|---|---|---|---|---|
@@ -39,4 +39,4 @@ Esta propuesta es para LEDs indicadores pequeños de dos patas, con corriente ba
 
 El usuario confirmó que la vía perpendicular sin semáforo tendrá una señal de **ceda el paso**. Esto no impone eléctricamente el comportamiento de los vehículos: debe respetarse en la maqueta. Para controlar físicamente ambos movimientos con luces independientes se necesitan semáforos adicionales y una expansión de salidas. La aplicación permite añadir semáforos **virtuales**, pero no crea salidas físicas.
 
-Con la asignación actual `EJE = {H,H,H,H,H,H}`, los seis focos controlan las horizontales. Durante las fases del programa reservadas al eje V, todos los LEDs físicos permanecen rojos; el ceda es pasivo y no hay verde vertical. Esta secuencia exacta está descrita en la guía. Si el diseño necesita mostrar verde físico en una vía secundaria, habrá que cambiar la distribución de señales y verificar una nueva lógica segura antes de habilitar el mapa.
+El sketch conserva `EJE = {H,H,H,H,H,H}` como asignación inicial sin confirmar y `MAPA_CONFIRMADO=false`: el ciclo automático sigue bloqueado con los seis rojos. Ese valor de `EJE` no coincide con el croquis actualizado, cuyo mapa visual es `{V,H,V,H,V,H}`. Antes de habilitar el ciclo hay que verificar los grupos de LEDs del montaje y ajustar el eje de cada semáforo. Las fases H/V mostradas por la web son simuladas; no demuestran la correspondencia del cableado ni sustituyen la señal de ceda del movimiento perpendicular.

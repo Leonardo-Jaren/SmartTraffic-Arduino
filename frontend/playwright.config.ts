@@ -12,15 +12,15 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: '../backend/env/bin/python ../backend/manage.py runserver --noreload 127.0.0.1:8000',
+      command: `${process.platform === 'win32' ? '../backend/env/Scripts/python.exe' : '../backend/env/bin/python'} ../backend/manage.py runserver --noreload 127.0.0.1:8000`,
       url: 'http://127.0.0.1:8000/api/dispositivo/',
-      reuseExistingServer: false,
+      reuseExistingServer: !process.env.CI,
       timeout: 30_000,
     },
     {
       command: 'npm run dev -- --host 127.0.0.1 --port 5173 --strictPort',
       url: 'http://127.0.0.1:5173/',
-      reuseExistingServer: false,
+      reuseExistingServer: !process.env.CI,
       timeout: 30_000,
     },
   ],

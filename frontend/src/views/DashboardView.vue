@@ -33,6 +33,7 @@ const {
   borrador,
   mensaje,
   descripcionSeleccion,
+  detalleSeleccion,
   listaCierres,
   impactos,
   aplicarTiempos,
@@ -247,6 +248,7 @@ const { contenedor, pantallaCompleta, abrirPantallaCompleta, cerrarPantallaCompl
               v-model:eje="ejeNuevo"
               :seleccion="seleccion"
               :descripcion="descripcionSeleccion"
+              :detalle="detalleSeleccion"
               :cerrada="!!seleccion && cierres.has(seleccion.id)"
               :modo="modo"
               :cierres="listaCierres"

@@ -2,7 +2,7 @@
 
 El archivo fuente mantenible está en [`arduino/SmartTraffic/SmartTraffic.ino`](../arduino/SmartTraffic/SmartTraffic.ino). También puedes copiar el bloque completo de abajo en un sketch llamado `SmartTraffic` del Arduino IDE. Compila para **Arduino Uno (ATmega328P)**. Se ha compilado para AVR, pero no se ha cargado en una placa física en este entorno.
 
-**Estado inicial:** el programa enciende rojo en los seis semáforos y permanece bloqueado para comprobar el cableado. El diseño propuesto asigna S1–S6 a I1–I6, orientados a las vías horizontales; las verticales llevan ceda el paso. `TEST` permite comprobar cada LED antes de activar el ciclo.
+**Estado inicial:** el programa enciende rojo en los seis semáforos y permanece bloqueado para comprobar el cableado. El mapa visual ordena S1–S6 de I1 a I6. El croquis actualizado marca caras hacia sur, este, sur, oeste, norte y oeste; hay que comprobar qué semáforo corresponde a cada grupo de pines y ajustar su eje antes de habilitar el ciclo. `TEST` permite comprobar cada LED por separado.
 
 ```cpp
 // SmartTraffic para Arduino UNO R3 (ATmega328P). Protocolo ASCII a 115200 baudios.
@@ -206,7 +206,7 @@ void loop() {
 | S5 | A0 | A1 | A2 |
 | S6 | A3 | A4 | A5 |
 
-D0/D1 se reservan para USB serial. Cada pin va al ánodo (+) del LED correspondiente; su cátodo (−, normalmente pata corta) va a **su propia resistencia de 2,2 kΩ** y después a GND común. Consulta [electrónica](ELECTRONICA.md) antes de soldar. La asignación propuesta es S1→I1, S2→I2, S3→I3, S4→I4, S5→I5 y S6→I6; cada luz debe orientarse hacia los vehículos de la vía horizontal.
+D0/D1 se reservan para USB serial. Cada pin va al ánodo (+) del LED correspondiente; su cátodo (−, normalmente pata corta) va a **su propia resistencia de 2,2 kΩ** y después a GND común. Consulta [electrónica](ELECTRONICA.md) antes de soldar. La asignación visual es S1→I1, S2→I2, S3→I3, S4→I4, S5→I5 y S6→I6. Las direcciones dibujadas corresponden a la cara visible del semáforo; por sí solas no verifican qué LEDs conectaste a cada salida del Arduino.
 
 ## Cargar y comprobar cada LED
 
@@ -218,9 +218,9 @@ D0/D1 se reservan para USB serial. Cada pin va al ánodo (+) del LED correspondi
 
 ## Confirmar el mapa antes de activar la secuencia
 
-El sketch ya trae `CRUCE = {1,2,3,4,5,6}` y `EJE = {H,H,H,H,H,H}` como diseño inicial: S1–S6 corresponden a I1–I6 y controlan H1/H2. Coloca cada semáforo mirando a los vehículos de la vía horizontal e instala las señales de ceda el paso en las verticales. Verifica uno a uno los LEDs y el cableado de la tabla. Después cambia `MAPA_CONFIRMADO` de `false` a `true` y vuelve a cargar el sketch. El programa empieza con un intervalo de todo rojo. Si decides que algún semáforo controle una vertical, ajusta su `EJE` a `V` y revisa el cruce. El ceda el paso no controla eléctricamente el movimiento perpendicular.
+El sketch conserva `CRUCE = {1,2,3,4,5,6}` y `EJE = {H,H,H,H,H,H}` como valores de arranque **sin confirmar**. Según el croquis actual, el mapa visual de ejes es `EJE = {V,H,V,H,V,H}`: S1/S3/S5 vigilan el eje vertical y S2/S4/S6 el horizontal. Primero comprueba que los LEDs y el cableado reales corresponden a esa tabla; solo entonces cambia `EJE` y, después de revisar todos los cruces y las señales de ceda, `MAPA_CONFIRMADO` a `true`. No habilites la secuencia usando el valor H actual por defecto.
 
-La fase programada es global: horizontal verde, amarillo y rojo; después se reserva un intervalo para V y otro de todo rojo. **Con `EJE = {H,H,H,H,H,H}` ninguno de los seis focos representa la vertical**, así que durante las fases V los seis LEDs físicos siguen rojos. El ceda es una señal pasiva, no un estado luminoso controlado por Arduino. No hay medición ni offsets físicos para afirmar una ola verde. La simulación web usa fases virtuales independientes y una escala supuesta. Consulta la [guía visual de conexiones](GUIA_VISUAL_CONEXIONES_ARDUINO.pdf).
+La fase programada es global: horizontal verde, amarillo y rojo; después se reserva un intervalo para V y otro de todo rojo. Mientras `MAPA_CONFIRMADO=false`, el circuito automático permanece bloqueado con los seis rojos, sin importar el valor de `EJE`. Si se confirma el mapa visual `{V,H,V,H,V,H}`, al habilitarlo cada grupo mostrará únicamente el eje que tiene asignado; las señales de ceda siguen siendo pasivas. No hay medición ni offsets físicos para afirmar una ola verde. La simulación web usa fases y movimientos virtuales con una escala supuesta. La [guía visual de conexiones](GUIA_VISUAL_CONEXIONES_ARDUINO.pdf) conserva la orientación anterior de los semáforos; usa el [mapa actualizado](ANALISIS_MAQUETA.md) para sus caras y ejes.
 
 ## Protocolo y cambios de tiempo
 

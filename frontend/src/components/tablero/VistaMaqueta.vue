@@ -40,8 +40,8 @@ const { error } = useEscena3D(
       Arrastra para girar <span>·</span> Rueda para acercar <span>·</span> Clic para seleccionar
     </div>
     <div class="mapa-leyenda">
-      <span><i class="punto verde"></i> Vía libre</span><span><i class="punto rojo"></i> Detener</span
-      ><span><i class="punto cierre"></i> Cerrada</span>
+      <span><i class="punto verde"></i> Luz verde</span><span><i class="punto rojo"></i> Luz roja</span
+      ><span><i class="punto cierre"></i> Calle cerrada</span>
     </div>
   </div>
 </template>

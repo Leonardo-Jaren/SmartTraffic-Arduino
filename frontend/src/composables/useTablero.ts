@@ -26,6 +26,15 @@ export function useTablero() {
     }
     return `Semáforo virtual ${seleccion.value.id}`
   })
+  const detalleSeleccion = computed(() => {
+    if (!seleccion.value) return 'Haz clic sobre el mapa'
+    if (seleccion.value.tipo !== 'semaforo') return 'Maqueta virtual'
+    const datos = SEMAFOROS_BASE.find((semaforo) => semaforo.id === seleccion.value?.id)
+    const ubicacion = disposicion.ubicacionSeleccionada.value
+    if (!datos || !ubicacion) return ''
+    const rumbo = ['sur', 'este', 'norte', 'oeste'][Math.round(ubicacion.giro / 90) % 4]
+    return `Vigila el eje ${datos.eje === 'horizontal' ? 'H' : 'V'} · cara hacia el ${rumbo}`
+  })
   const listaCierres = computed(() => [...simulacion.cierres.value].map((id) => ({ id, nombre: describirTramo(id) })))
   const impactos = computed(() => analizarImpactos(simulacion.cierres.value))
 
@@ -71,6 +80,7 @@ export function useTablero() {
     borrador,
     mensaje,
     descripcionSeleccion,
+    detalleSeleccion,
     listaCierres,
     impactos,
     aplicarTiempos,

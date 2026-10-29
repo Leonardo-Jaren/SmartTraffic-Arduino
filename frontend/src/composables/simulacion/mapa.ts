@@ -49,19 +49,22 @@ export const ENTRADAS = Object.values(NODOS).filter((n) => n.tipo === 'entrada')
 export const SALIDAS = Object.values(NODOS).filter((n) => n.tipo === 'salida')
 export const METROS_POR_UNIDAD = 5
 export const VELOCIDAD_OLA = 30
-export const SEPARACION_SEGURA_VEHICULOS = 1.8
+export const SEPARACION_SEGURA_VEHICULOS = 2.4
 export const DISTANCIA_LINEA_CRUCE = 1.85
+// El vehículo se detiene con el frente sobre la línea, no con el centro del auto.
+export const DISTANCIA_PARADA_CRUCE = DISTANCIA_LINEA_CRUCE + 0.85
 export const DISTANCIA_LIBRE_CRUCE = 2
 export const RADIO_GIRO_VEHICULO = 0.9
 
-// S1–S6 ocupan los seis puntos rojos del esquema; las coordenadas son aproximadas.
+// Las flechas rojas del croquis muestran la cara del semáforo, opuesta al flujo que vigila.
+// El eje de cada luz sigue ese sentido confirmado para la simulación.
 export const SEMAFOROS_BASE = [
-  { id: 'S1', cruce: 'I1', dx: -1.3, dz: -1.3 },
-  { id: 'S2', cruce: 'I2', dx: -1.3, dz: 1.3 },
-  { id: 'S3', cruce: 'I3', dx: -1.3, dz: -1.3 },
-  { id: 'S4', cruce: 'I4', dx: 1.3, dz: -1.3 },
-  { id: 'S5', cruce: 'I5', dx: 1.3, dz: 1.3 },
-  { id: 'S6', cruce: 'I6', dx: 1.3, dz: -1.3 },
+  { id: 'S1', cruce: 'I1', dx: -1.3, dz: -1.3, eje: 'vertical' },
+  { id: 'S2', cruce: 'I2', dx: -1.3, dz: 1.3, eje: 'horizontal' },
+  { id: 'S3', cruce: 'I3', dx: -1.3, dz: -1.3, eje: 'vertical' },
+  { id: 'S4', cruce: 'I4', dx: 1.3, dz: -1.3, eje: 'horizontal' },
+  { id: 'S5', cruce: 'I5', dx: 1.3, dz: 1.3, eje: 'vertical' },
+  { id: 'S6', cruce: 'I6', dx: 1.3, dz: -1.3, eje: 'horizontal' },
 ] as const
 
 export function obtenerRotacionSemaforo(cruce: string, eje: Eje): number {

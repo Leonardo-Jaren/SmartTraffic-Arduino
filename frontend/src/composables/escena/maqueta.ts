@@ -1,70 +1,13 @@
 import * as THREE from 'three'
 import { CRUCES, DISTANCIA_LINEA_CRUCE, NODOS, TRAMOS } from '../simulacion/mapa'
+import { crearCiudad } from './ciudad'
+import { crearSenalesCeda } from './senales'
 
 // El tablero físico declarado mide 160 × 120 cm; el eje Y conserva la escala horizontal.
 export const ESCALA_MAQUETA = { x: 1.6 / 21, y: 1.6 / 21, z: 1.2 / 17 }
 
 function caja(ancho: number, alto: number, fondo: number, color: number) {
   return new THREE.Mesh(new THREE.BoxGeometry(ancho, alto, fondo), new THREE.MeshStandardMaterial({ color }))
-}
-
-function crearEdificio(x: number, z: number, color: number, ancho = 2.1, profundidad = 2) {
-  const grupo = new THREE.Group()
-  const altura = z === 0 ? 1.85 : 1.55
-  const edificio = caja(ancho, altura, profundidad, 0xf4f2e9)
-  edificio.userData.proyectaSombra = true
-  edificio.position.y = 0.2 + altura / 2
-  const techo = caja(ancho + 0.16, 0.18, profundidad + 0.16, color)
-  techo.userData.proyectaSombra = true
-  techo.position.y = 0.2 + altura + 0.09
-  const base = caja(ancho + 0.07, 0.12, profundidad + 0.07, 0xd8ded4)
-  base.position.y = 0.25
-  grupo.add(base, edificio, techo)
-  const terraza = caja(ancho * 0.7, 0.04, profundidad * 0.65, 0xf0ead7)
-  terraza.position.y = 0.2 + altura + 0.2
-  const ventilacion = caja(0.4, 0.23, 0.35, 0x9baab0)
-  ventilacion.position.set(ancho * 0.2, 0.2 + altura + 0.32, -profundidad * 0.15)
-  grupo.add(terraza, ventilacion)
-  for (let piso = 0; piso < 2; piso++) {
-    for (let i = -1; i <= 1; i++) {
-      const ventana = caja(0.3, 0.32, 0.035, 0x91afba)
-      ventana.position.set(i * ancho * 0.27, 0.6 + piso * 0.62, profundidad / 2 + 0.02)
-      grupo.add(ventana)
-    }
-    for (let i = -1; i <= 1; i++) {
-      const ventanaLateral = caja(0.035, 0.32, 0.3, 0x91afba)
-      ventanaLateral.position.set(ancho / 2 + 0.02, 0.6 + piso * 0.62, i * profundidad * 0.27)
-      grupo.add(ventanaLateral)
-    }
-  }
-  const puerta = caja(0.34, 0.45, 0.04, 0x687f83)
-  puerta.position.set(0, 0.45, profundidad / 2 + 0.04)
-  grupo.add(puerta)
-  const marquesina = caja(0.65, 0.07, 0.36, color)
-  marquesina.position.set(0, 0.77, profundidad / 2 + 0.15)
-  const jardinera = caja(ancho * 0.75, 0.2, 0.25, 0xb7997b)
-  jardinera.position.set(0, 0.3, -profundidad / 2 - 0.2)
-  const plantas = caja(ancho * 0.7, 0.15, 0.23, 0x488b60)
-  plantas.position.set(0, 0.47, -profundidad / 2 - 0.2)
-  grupo.add(marquesina, jardinera, plantas)
-  grupo.position.set(x, 0, z)
-  return grupo
-}
-
-function crearArbol(x: number, z: number) {
-  const tronco = caja(0.14, 0.65, 0.14, 0x8e694a)
-  tronco.position.set(x, 0.53, z)
-  const copa = new THREE.Mesh(
-    new THREE.SphereGeometry(0.45, 10, 8),
-    new THREE.MeshStandardMaterial({ color: 0x43896a }),
-  )
-  copa.position.set(x, 1.12, z)
-  const copaSuperior = new THREE.Mesh(
-    new THREE.SphereGeometry(0.3, 10, 8),
-    new THREE.MeshStandardMaterial({ color: 0x64a97b }),
-  )
-  copaSuperior.position.set(x - 0.12, 1.4, z - 0.06)
-  return [tronco, copa, copaSuperior]
 }
 
 function crearBordes(tramo: (typeof TRAMOS)[number], escena: THREE.Group) {
@@ -93,38 +36,6 @@ function crearBordes(tramo: (typeof TRAMOS)[number], escena: THREE.Group) {
     )
     borde.position.set(centroX - dz * lado * 0.95, 0.23, centroZ + dx * lado * 0.95)
     escena.add(acera, borde)
-  }
-}
-
-function decorarPlaza(escena: THREE.Group) {
-  const plaza = caja(4.2, 0.04, 5.2, 0x8dc697)
-  plaza.position.set(3, 0.19, 0)
-  const caminoHorizontal = caja(3.9, 0.02, 0.32, 0xdce2d1)
-  caminoHorizontal.position.set(3, 0.225, 0)
-  const caminoVertical = caja(0.32, 0.02, 4.9, 0xdce2d1)
-  caminoVertical.position.set(3, 0.225, 0)
-  const fuente = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.43, 0.48, 0.18, 20),
-    new THREE.MeshStandardMaterial({ color: 0xe4e6d8 }),
-  )
-  fuente.position.set(3, 0.31, 0)
-  const agua = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.34, 0.34, 0.03, 20),
-    new THREE.MeshStandardMaterial({ color: 0x80c6d4 }),
-  )
-  agua.position.set(3, 0.42, 0)
-  escena.add(plaza, caminoHorizontal, caminoVertical, fuente, agua)
-  for (const [x, z] of [
-    [1.7, -1.8],
-    [4.3, 1.8],
-  ] as const) {
-    const asiento = caja(0.7, 0.09, 0.23, 0x9b7755)
-    asiento.position.set(x, 0.43, z)
-    const pata1 = caja(0.07, 0.24, 0.2, 0x718378)
-    pata1.position.set(x - 0.26, 0.31, z)
-    const pata2 = caja(0.07, 0.24, 0.2, 0x718378)
-    pata2.position.set(x + 0.26, 0.31, z)
-    escena.add(asiento, pata1, pata2)
   }
 }
 
@@ -220,28 +131,7 @@ export function crearMaqueta(escena: THREE.Group) {
     crearPaso(n.x, n.z + 1.15, false, escena)
   }
 
-  const edificios: [number, number, number][] = [
-    [-3, -6.2, 0xe7c657],
-    [3, -6.2, 0x679bc9],
-    [8, -6.2, 0xe5c55a],
-    [-3, 0, 0xe8d262],
-    [8, 0, 0x9b7bbe],
-    [-3, 6, 0xe8935a],
-    [3, 6, 0x424d53],
-    [8, 6, 0xc5da59],
-  ]
-  edificios.forEach(([x, z, color]) => escena.add(crearEdificio(x, z, color, x === 8 ? 1.7 : 2.2, z === 0 ? 2.4 : 1.6)))
-  decorarPlaza(escena)
-  for (const [x, z] of [
-    [2, -1.5],
-    [4, -1],
-    [2.2, 1.4],
-    [3.9, 1.5],
-    [-8, -6],
-    [-8, 0],
-    [-8, 6],
-  ] as const) {
-    escena.add(...crearArbol(x, z))
-  }
+  crearCiudad(escena)
+  crearSenalesCeda(escena)
   return { seleccionables, calles, cruces }
 }

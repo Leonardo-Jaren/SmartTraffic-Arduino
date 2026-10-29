@@ -23,10 +23,10 @@ defineEmits<{ seleccionar: [id: string] }>()
     <p class="texto-secundario">
       {{
         modo === 'simulacion'
-          ? 'Solo hay seis luces físicas: S1–S6 controlan H; V sigue una fase virtual.'
+          ? 'S1, S3 y S5 regulan las verticales; S2, S4 y S6 las horizontales. Las seis luces miran hacia los vehículos que se acercan. H y V muestran las fases simuladas.'
           : dispositivo.fuente === 'simulado'
             ? 'Datos de prueba de un dispositivo simulado, sin Arduino físico.'
-            : 'Colores informados por el Arduino; S1–S6 se ubican en I1–I6 según la asignación propuesta.'
+            : 'Colores recibidos del Arduino en orden S1–S6. La orientación visual de la maqueta sigue el croquis.'
       }}
     </p>
     <div class="semaforos-grid" v-if="modo === 'simulacion'">

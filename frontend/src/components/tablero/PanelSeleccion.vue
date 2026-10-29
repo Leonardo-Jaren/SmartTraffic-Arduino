@@ -5,6 +5,7 @@ import type { Eje, Modo, Seleccion, Esquina, UbicacionSemaforo } from '@/types/t
 defineProps<{
   seleccion: Seleccion | null
   descripcion: string
+  detalle: string
   cerrada: boolean
   modo: Modo
   cierres: { id: string; nombre: string }[]
@@ -31,13 +32,7 @@ const eje = defineModel<Eje>('eje', { required: true })
       <span class="seleccion-icono"><MapPin :size="17" /></span>
       <div>
         <strong>{{ descripcion }}</strong
-        ><small>{{
-          seleccion?.tipo === 'semaforo'
-            ? 'Posición aproximada · controla la vía horizontal'
-            : seleccion
-              ? 'Maqueta virtual'
-              : 'Haz clic sobre el mapa'
-        }}</small>
+        ><small>{{ detalle }}</small>
       </div>
     </div>
     <div v-if="seleccion?.tipo === 'semaforo' && ubicacion" class="editor-ubicacion">

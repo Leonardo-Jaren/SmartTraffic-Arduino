@@ -1,7 +1,7 @@
 import type { FaseCruce, Vehiculo } from '@/types/trafico'
 import {
   DISTANCIA_LIBRE_CRUCE,
-  DISTANCIA_LINEA_CRUCE,
+  DISTANCIA_PARADA_CRUCE,
   ENTRADAS,
   METROS_POR_UNIDAD,
   NODOS,
@@ -100,7 +100,9 @@ export function avanzarVehiculos(
   fases: FaseCruce[],
   velocidad: number,
 ): Vehiculo[] {
-  const distancia = (Math.max(0, Math.min(segundos, 0.1)) * (velocidad / 3.6)) / METROS_POR_UNIDAD
+  const paso = Number.isFinite(segundos) ? Math.max(0, Math.min(segundos, 0.1)) : 0
+  const rapidez = Number.isFinite(velocidad) ? Math.max(0, velocidad) : 0
+  const distancia = (paso * (rapidez / 3.6)) / METROS_POR_UNIDAD
   const reservas = new Map(vehiculos.filter((v) => v.reservado).map((v) => [v.reservado!, v.id]))
   const terminados = new Set<number>()
   const ordenados = [...vehiculos].sort((a, b) => (posicionEnCalle(b) ?? -1) - (posicionEnCalle(a) ?? -1))
@@ -133,8 +135,9 @@ export function avanzarVehiculos(
     const destino = NODOS[tramo.hacia]!
     let limite = Number.POSITIVE_INFINITY
     let motivo = ''
+    let cruceAReservar: { id: string; linea: number } | null = null
     if (destino.tipo === 'cruce' && vehiculo.reservado !== destino.id) {
-      const linea = tramo.longitud - DISTANCIA_LINEA_CRUCE
+      const linea = tramo.longitud - DISTANCIA_PARADA_CRUCE
       const fase = fases.find((f) => f.id === destino.id)
       const libre = !reservas.has(destino.id) || reservas.get(destino.id) === vehiculo.id
       const rutaDisponible = actualizarRuta(vehiculo, destino.id, cierres)
@@ -143,7 +146,8 @@ export function avanzarVehiculos(
         (otro) =>
           otro.id !== vehiculo.id &&
           otro.ruta[otro.indice] === siguiente &&
-          otro.progreso < DISTANCIA_LIBRE_CRUCE,
+          // Debe caber el auto entero fuera del cruce y conservar la distancia con la cola.
+          otro.progreso < DISTANCIA_LIBRE_CRUCE + SEPARACION_SEGURA_VEHICULOS,
       )
       if (!rutaDisponible || !fase || fase[tramo.eje] !== 'verde' || !libre || !salidaLibre) {
         limite = Math.max(vehiculo.progreso, linea)
@@ -154,10 +158,7 @@ export function avanzarVehiculos(
             : !salidaLibre
               ? 'salida ocupada'
               : 'semáforo'
-      } else if (vehiculo.progreso + distancia >= linea) {
-        vehiculo.reservado = destino.id
-        reservas.set(destino.id, vehiculo.id)
-      }
+      } else cruceAReservar = { id: destino.id, linea }
     }
     const posicion = posicionEnCalle(vehiculo)
     for (const otro of vehiculos) {
@@ -175,9 +176,14 @@ export function avanzarVehiculos(
     }
     const progresoAnterior = vehiculo.progreso
     vehiculo.progreso = Math.min(limite, vehiculo.progreso + distancia)
+    // La cola puede impedir avanzar aunque haya verde. Una intención no ocupa el cruce.
+    if (cruceAReservar && vehiculo.progreso > cruceAReservar.linea && vehiculo.progreso > progresoAnterior) {
+      vehiculo.reservado = cruceAReservar.id
+      reservas.set(cruceAReservar.id, vehiculo.id)
+    }
     const sobrante = Math.max(0, vehiculo.progreso - tramo.longitud)
     vehiculo.detenido = motivo && vehiculo.progreso <= progresoAnterior + 1e-6 ? motivo : ''
-    if (vehiculo.reservado === tramo.de && vehiculo.progreso >= DISTANCIA_LIBRE_CRUCE) {
+    if (vehiculo.reservado === tramo.de && vehiculo.progreso + 1e-6 >= DISTANCIA_LIBRE_CRUCE) {
       reservas.delete(vehiculo.reservado)
       vehiculo.reservado = null
     }

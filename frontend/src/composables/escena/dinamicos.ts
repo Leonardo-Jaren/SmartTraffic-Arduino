@@ -13,6 +13,7 @@ import { NODOS, RADIO_GIRO_VEHICULO, SEMAFOROS_BASE, obtenerRotacionSemaforo, ob
 import { obtenerColorSemaforo } from '../simulacion/semaforos'
 import type { crearMaqueta } from './maqueta'
 import { colorearSemaforo, crearSemaforo } from './semaforos'
+import { animarVehiculo, crearVehiculo } from './vehiculos'
 
 function pintar(mesh: THREE.Mesh, color: number) {
   ;(mesh.material as THREE.MeshStandardMaterial).color.setHex(color)
@@ -32,70 +33,6 @@ function liberarObjeto(objeto: THREE.Object3D) {
   materialesUnicos.forEach((material) => material.dispose())
 }
 
-function crearVehiculo(color: number) {
-  const grupo = new THREE.Group()
-  const materialCarroceria = new THREE.MeshStandardMaterial({ color, metalness: 0.28, roughness: 0.38 })
-  const materialVidrio = new THREE.MeshStandardMaterial({ color: 0x233b49, metalness: 0.32, roughness: 0.2 })
-  const materialRueda = new THREE.MeshStandardMaterial({ color: 0x171d20, roughness: 0.84 })
-  const materialMetal = new THREE.MeshStandardMaterial({ color: 0x8fa0a3, metalness: 0.78, roughness: 0.3 })
-  const materialLuzFrontal = new THREE.MeshStandardMaterial({
-    color: 0xfff0b8,
-    emissive: 0xffd56a,
-    emissiveIntensity: 0.3,
-  })
-  const materialLuzTrasera = new THREE.MeshStandardMaterial({ color: 0xb84d46, emissive: 0x5c1715 })
-  const agregarCaja = (
-    ancho: number,
-    alto: number,
-    largo: number,
-    material: THREE.Material,
-    y: number,
-    z: number,
-    proyectaSombra = false,
-  ) => {
-    const pieza = new THREE.Mesh(new THREE.BoxGeometry(ancho, alto, largo), material)
-    pieza.position.set(0, y, z)
-    pieza.castShadow = proyectaSombra
-    pieza.userData.proyectaSombra = proyectaSombra
-    grupo.add(pieza)
-    return pieza
-  }
-
-  agregarCaja(0.72, 0.29, 1.42, materialCarroceria, 0.31, 0, true)
-  agregarCaja(0.68, 0.13, 0.43, materialCarroceria, 0.47, 0.43, true)
-  agregarCaja(0.54, 0.27, 0.64, materialVidrio, 0.51, -0.08, true)
-  agregarCaja(0.49, 0.11, 0.39, materialCarroceria, 0.67, -0.08, true)
-  const parabrisas = agregarCaja(0.47, 0.12, 0.035, materialVidrio, 0.59, 0.25)
-  parabrisas.rotation.x = -0.32
-  const vidrioTrasero = agregarCaja(0.46, 0.11, 0.035, materialVidrio, 0.58, -0.4)
-  vidrioTrasero.rotation.x = 0.32
-  agregarCaja(0.24, 0.07, 0.025, materialMetal, 0.3, 0.73)
-
-  const ruedaGeometria = new THREE.CylinderGeometry(0.17, 0.17, 0.13, 16)
-  const rueda = (x: number, z: number) => {
-    const llanta = new THREE.Mesh(ruedaGeometria, materialRueda)
-    llanta.rotation.z = Math.PI / 2
-    llanta.position.set(x, 0.17, z)
-    llanta.castShadow = true
-    llanta.userData.proyectaSombra = true
-    grupo.add(llanta)
-  }
-  for (const x of [-0.36, 0.36]) for (const z of [-0.46, 0.46]) rueda(x, z)
-
-  for (const x of [-0.23, 0.23]) {
-    const luzDelantera = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.07, 0.035), materialLuzFrontal)
-    luzDelantera.position.set(x, 0.38, 0.72)
-    grupo.add(luzDelantera)
-    const luzTrasera = new THREE.Mesh(
-      new THREE.BoxGeometry(0.14, 0.075, 0.035),
-      materialLuzTrasera,
-    )
-    luzTrasera.position.set(x, 0.37, -0.72)
-    grupo.add(luzTrasera)
-  }
-  return grupo
-}
-
 function calcularGiro(
   entrada: { x: number; z: number },
   salida: { x: number; z: number },
@@ -110,15 +47,9 @@ function calcularGiro(
   const t = THREE.MathUtils.clamp(porcentaje, 0, 1)
   const inverso = 1 - t
   const x =
-    inverso ** 3 * inicio.x +
-    3 * inverso ** 2 * t * control1.x +
-    3 * inverso * t ** 2 * control2.x +
-    t ** 3 * fin.x
+    inverso ** 3 * inicio.x + 3 * inverso ** 2 * t * control1.x + 3 * inverso * t ** 2 * control2.x + t ** 3 * fin.x
   const z =
-    inverso ** 3 * inicio.z +
-    3 * inverso ** 2 * t * control1.z +
-    3 * inverso * t ** 2 * control2.z +
-    t ** 3 * fin.z
+    inverso ** 3 * inicio.z + 3 * inverso ** 2 * t * control1.z + 3 * inverso * t ** 2 * control2.z + t ** 3 * fin.z
   const dx =
     3 * inverso ** 2 * (control1.x - inicio.x) +
     6 * inverso * t * (control2.x - control1.x) +
@@ -131,12 +62,8 @@ function calcularGiro(
 }
 
 function obtenerPosicionVehiculo(vehiculo: Vehiculo, tramo: NonNullable<ReturnType<typeof obtenerTramo>>) {
-  const anterior = vehiculo.ruta[vehiculo.indice - 1]
-    ? obtenerTramo(vehiculo.ruta[vehiculo.indice - 1]!)
-    : undefined
-  const siguiente = vehiculo.ruta[vehiculo.indice + 1]
-    ? obtenerTramo(vehiculo.ruta[vehiculo.indice + 1]!)
-    : undefined
+  const anterior = vehiculo.ruta[vehiculo.indice - 1] ? obtenerTramo(vehiculo.ruta[vehiculo.indice - 1]!) : undefined
+  const siguiente = vehiculo.ruta[vehiculo.indice + 1] ? obtenerTramo(vehiculo.ruta[vehiculo.indice + 1]!) : undefined
   const direccion = (id: string) => {
     const segmento = obtenerTramo(id)
     if (!segmento) return null
@@ -188,7 +115,7 @@ export function crearDinamicos(escena: THREE.Group, maqueta: ReturnType<typeof c
     const semaforo = crearSemaforo()
     const nodo = NODOS[datos.cruce]!
     semaforo.grupo.position.set(nodo.x + datos.dx, 0.2, nodo.z + datos.dz)
-    semaforo.grupo.rotation.y = obtenerRotacionSemaforo(datos.cruce, 'horizontal')
+    semaforo.grupo.rotation.y = obtenerRotacionSemaforo(datos.cruce, datos.eje)
     semaforo.grupo.traverse((objeto) => {
       objeto.userData = { tipo: 'semaforo', id: datos.id }
     })
@@ -246,6 +173,11 @@ export function crearDinamicos(escena: THREE.Group, maqueta: ReturnType<typeof c
       const tramo = obtenerTramo(vehiculo.ruta[vehiculo.indice] || '')
       if (!tramo) continue
       const posicion = obtenerPosicionVehiculo(vehiculo, tramo)
+      const distancia = objeto.userData.ubicado
+        ? Math.hypot(posicion.x - objeto.position.x, posicion.z - objeto.position.z)
+        : 0
+      animarVehiculo(objeto, distancia, Boolean(vehiculo.detenido))
+      objeto.userData.ubicado = true
       objeto.position.set(posicion.x, 0.22, posicion.z)
       objeto.rotation.y = Math.atan2(posicion.dx, posicion.dz)
     }

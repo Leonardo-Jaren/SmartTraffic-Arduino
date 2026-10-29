@@ -12,6 +12,7 @@ import type {
 } from '@/types/trafico'
 import { crearDinamicos } from './escena/dinamicos'
 import { crearMaqueta, ESCALA_MAQUETA } from './escena/maqueta'
+import { calcularDistanciaEncuadre, calcularEncuadre, obtenerPuntosEncuadre } from './escena/encuadre'
 
 interface EstadoEscena {
   vehiculos: Vehiculo[]
@@ -42,8 +43,8 @@ export function useEscena3D(
       escena.background = new THREE.Color(0xe8efe9)
       const grupoMaqueta = new THREE.Group()
       escena.add(grupoMaqueta)
-      const camara = new THREE.PerspectiveCamera(38, 1, 0.1, 150)
-      camara.position.set(14.4 * ESCALA_MAQUETA.x, 18.9 * ESCALA_MAQUETA.y, 21.6 * ESCALA_MAQUETA.z)
+      const camara = new THREE.PerspectiveCamera(38, 1, 0.02, 30)
+      camara.position.set(13 * ESCALA_MAQUETA.x, 17 * ESCALA_MAQUETA.y, 19.5 * ESCALA_MAQUETA.z)
       const renderizador = new THREE.WebGLRenderer({ antialias: true })
       renderizador.setPixelRatio(Math.min(window.devicePixelRatio, 2))
       renderizador.outputColorSpace = THREE.SRGBColorSpace
@@ -66,8 +67,8 @@ export function useEscena3D(
       const controles = new OrbitControls(camara, renderizador.domElement)
       controles.target.set(0, 0, 0)
       controles.enableDamping = true
-      controles.minDistance = 1.15
-      controles.maxDistance = 4.5
+      controles.minDistance = 0.35
+      controles.maxDistance = 6
       controles.maxPolarAngle = Math.PI / 2.1
       controles.update()
       const maqueta = crearMaqueta(grupoMaqueta)
@@ -78,6 +79,14 @@ export function useEscena3D(
         }
       })
       const dinamicos = crearDinamicos(grupoMaqueta, maqueta)
+      const limites = new THREE.Box3().setFromObject(grupoMaqueta)
+      controles.target.copy(limites.getCenter(new THREE.Vector3()))
+      const puntosEncuadre = obtenerPuntosEncuadre(grupoMaqueta)
+      let vistaAjustadaPorUsuario = false
+      const direccionEncuadrada = new THREE.Vector3()
+      const marcarZoomManual = () => {
+        vistaAjustadaPorUsuario = true
+      }
       const rayo = new THREE.Raycaster()
       const puntero = new THREE.Vector2()
       let inicioX = 0
@@ -85,6 +94,7 @@ export function useEscena3D(
       const iniciarPuntero = (evento: PointerEvent) => {
         inicioX = evento.clientX
         inicioY = evento.clientY
+        if (evento.button !== 0 || evento.pointerType === 'touch') vistaAjustadaPorUsuario = true
       }
       const terminarPuntero = (evento: PointerEvent) => {
         if (Math.hypot(evento.clientX - inicioX, evento.clientY - inicioY) > 5) return
@@ -99,11 +109,32 @@ export function useEscena3D(
       }
       renderizador.domElement.addEventListener('pointerdown', iniciarPuntero)
       renderizador.domElement.addEventListener('pointerup', terminarPuntero)
+      renderizador.domElement.addEventListener('wheel', marcarZoomManual, { passive: true })
       const ajustar = () => {
         const ancho = elemento.clientWidth || 1
         const alto = elemento.clientHeight || 1
-        camara.aspect = ancho / alto
+        const direccion = camara.position.clone().sub(controles.target).normalize()
+        const aspecto = ancho / alto
+        if (vistaAjustadaPorUsuario) {
+          const anterior = calcularDistanciaEncuadre(
+            puntosEncuadre,
+            controles.target,
+            direccion,
+            camara.fov,
+            camara.aspect,
+          )
+          const zoom = camara.position.distanceTo(controles.target) / anterior
+          const distancia = calcularDistanciaEncuadre(puntosEncuadre, controles.target, direccion, camara.fov, aspecto)
+          camara.position.copy(controles.target).addScaledVector(direccion, distancia * zoom)
+        } else {
+          const encuadre = calcularEncuadre(puntosEncuadre, direccion, camara.fov, aspecto)
+          controles.target.copy(encuadre.centro)
+          camara.position.copy(controles.target).addScaledVector(direccion, encuadre.distancia)
+        }
+        camara.aspect = aspecto
+        direccionEncuadrada.copy(direccion)
         camara.updateProjectionMatrix()
+        controles.update()
         renderizador.setSize(ancho, alto)
       }
       const observador = new ResizeObserver(ajustar)
@@ -123,6 +154,23 @@ export function useEscena3D(
           estado.ubicaciones,
         )
         controles.update()
+        // Al girar la vista inicial, mantiene todos los bordes dentro del cuadro.
+        // Un zoom o desplazamiento manual conserva después la distancia elegida.
+        if (!vistaAjustadaPorUsuario) {
+          const direccion = camara.position.clone().sub(controles.target).normalize()
+          if (direccion.distanceToSquared(direccionEncuadrada) > 1e-8) {
+            const distancia = calcularDistanciaEncuadre(
+              puntosEncuadre,
+              controles.target,
+              direccion,
+              camara.fov,
+              camara.aspect,
+            )
+            camara.position.copy(controles.target).addScaledVector(direccion, distancia)
+            camara.lookAt(controles.target)
+            direccionEncuadrada.copy(direccion)
+          }
+        }
         renderizador.render(escena, camara)
         animacion = requestAnimationFrame(dibujar)
       }
@@ -132,17 +180,24 @@ export function useEscena3D(
         controles.dispose()
         renderizador.domElement.removeEventListener('pointerdown', iniciarPuntero)
         renderizador.domElement.removeEventListener('pointerup', terminarPuntero)
+        renderizador.domElement.removeEventListener('wheel', marcarZoomManual)
         const geometrias = new Set<THREE.BufferGeometry>()
         const materiales = new Set<THREE.Material>()
+        const texturas = new Set<THREE.Texture>()
         escena.traverse((objeto) => {
           if (objeto instanceof THREE.Mesh) {
             geometrias.add(objeto.geometry)
             const listaMateriales = Array.isArray(objeto.material) ? objeto.material : [objeto.material]
-            listaMateriales.forEach((material) => materiales.add(material))
+            listaMateriales.forEach((material) => {
+              materiales.add(material)
+              const mapa = 'map' in material ? material.map : null
+              if (mapa instanceof THREE.Texture) texturas.add(mapa)
+            })
           }
         })
         geometrias.forEach((geometria) => geometria.dispose())
         materiales.forEach((material) => material.dispose())
+        texturas.forEach((textura) => textura.dispose())
         renderizador.dispose()
         renderizador.domElement.remove()
       }
