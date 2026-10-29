@@ -23,7 +23,7 @@ defineEmits<{ seleccionar: [id: string] }>()
     <p class="texto-secundario">
       {{
         modo === 'simulacion'
-          ? 'S1–S6 representan las horizontales; V es la fase virtual de la vía secundaria.'
+          ? 'S1–S6 controlan H; V usa una luz virtual, sin confirmar hardware instalado.'
           : dispositivo.fuente === 'simulado'
             ? 'Datos de prueba de un dispositivo simulado, sin Arduino físico.'
             : 'Colores informados por el Arduino; S1–S6 se ubican en I1–I6 según la asignación propuesta.'

@@ -1,6 +1,6 @@
 import { computed, ref, watch, type Ref } from 'vue'
 import type { Esquina, Seleccion, UbicacionSemaforo } from '@/types/trafico'
-import { SEMAFOROS_BASE } from './simulacion/mapa'
+import { obtenerRotacionSemaforo, SEMAFOROS_BASE } from './simulacion/mapa'
 
 const CLAVE = 'smarttraffic.ubicaciones.v1'
 export const ESQUINAS: Record<Esquina, { x: number; z: number }> = {
@@ -11,11 +11,14 @@ export const ESQUINAS: Record<Esquina, { x: number; z: number }> = {
 }
 
 export function ubicacionesIniciales(): UbicacionSemaforo[] {
-  return SEMAFOROS_BASE.map((s, indice) => ({
-    id: s.id,
-    esquina: s.dz < 0 ? (s.dx < 0 ? 'NO' : 'NE') : s.dx < 0 ? 'SO' : 'SE',
-    giro: indice < 3 ? 90 : 270,
-  }))
+  return SEMAFOROS_BASE.map((semaforo) => {
+    const rotacion = ((obtenerRotacionSemaforo(semaforo.cruce, 'horizontal') * 180) / Math.PI + 360) % 360
+    return {
+      id: semaforo.id,
+      esquina: semaforo.dz < 0 ? (semaforo.dx < 0 ? 'NO' : 'NE') : semaforo.dx < 0 ? 'SO' : 'SE',
+      giro: Math.round(rotacion / 90) * 90 % 360,
+    }
+  })
 }
 
 export function validarUbicaciones(valor: unknown): valor is UbicacionSemaforo[] {

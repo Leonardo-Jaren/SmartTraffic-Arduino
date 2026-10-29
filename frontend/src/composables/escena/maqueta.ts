@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { CRUCES, NODOS, TRAMOS } from '../simulacion/mapa'
+import { CRUCES, DISTANCIA_LINEA_CRUCE, NODOS, TRAMOS } from '../simulacion/mapa'
 
 function caja(ancho: number, alto: number, fondo: number, color: number) {
   return new THREE.Mesh(new THREE.BoxGeometry(ancho, alto, fondo), new THREE.MeshStandardMaterial({ color }))
@@ -9,8 +9,10 @@ function crearEdificio(x: number, z: number, color: number, ancho = 2.1, profund
   const grupo = new THREE.Group()
   const altura = z === 0 ? 1.85 : 1.55
   const edificio = caja(ancho, altura, profundidad, 0xf4f2e9)
+  edificio.userData.proyectaSombra = true
   edificio.position.y = 0.2 + altura / 2
   const techo = caja(ancho + 0.16, 0.18, profundidad + 0.16, color)
+  techo.userData.proyectaSombra = true
   techo.position.y = 0.2 + altura + 0.09
   const base = caja(ancho + 0.07, 0.12, profundidad + 0.07, 0xd8ded4)
   base.position.y = 0.25
@@ -156,12 +158,26 @@ function crearPaso(x: number, z: number, horizontal: boolean, escena: THREE.Scen
   }
 }
 
+function crearLineaDetencion(tramo: (typeof TRAMOS)[number], escena: THREE.Scene) {
+  if (NODOS[tramo.hacia]!.tipo !== 'cruce') return
+  const a = NODOS[tramo.de]!
+  const b = NODOS[tramo.hacia]!
+  const dx = (b.x - a.x) / tramo.longitud
+  const dz = (b.z - a.z) / tramo.longitud
+  const linea = new THREE.Mesh(
+    new THREE.BoxGeometry(tramo.eje === 'horizontal' ? 0.13 : 1.55, 0.018, tramo.eje === 'vertical' ? 0.13 : 1.55),
+    new THREE.MeshBasicMaterial({ color: 0xf1f0e8 }),
+  )
+  linea.position.set(b.x - dx * DISTANCIA_LINEA_CRUCE, 0.233, b.z - dz * DISTANCIA_LINEA_CRUCE)
+  escena.add(linea)
+}
+
 export function crearMaqueta(escena: THREE.Scene) {
   const seleccionables: THREE.Object3D[] = []
   const calles = new Map<string, THREE.Mesh>()
   const cruces = new Map<string, THREE.Mesh>()
-  const indicadores = new Map<string, { horizontal: THREE.Mesh; vertical: THREE.Mesh }>()
   const base = caja(21, 0.35, 17, 0x6baa78)
+  base.userData.recibeSombra = true
   base.position.y = -0.03
   escena.add(base)
 
@@ -174,20 +190,23 @@ export function crearMaqueta(escena: THREE.Scene) {
     const margenB = b.tipo === 'cruce' ? 1 : 0
     const largo = tramo.longitud - margenA - margenB
     const carretera = caja(tramo.eje === 'horizontal' ? largo : 2, 0.06, tramo.eje === 'vertical' ? largo : 2, 0x343e49)
+    carretera.userData.recibeSombra = true
     carretera.position.set(a.x + dx * (margenA + largo / 2), 0.19, a.z + dz * (margenA + largo / 2))
-    carretera.userData = { tipo: 'tramo', id: tramo.id }
+    carretera.userData = { ...carretera.userData, tipo: 'tramo', id: tramo.id }
     escena.add(carretera)
     seleccionables.push(carretera)
     calles.set(tramo.id, carretera)
     crearBordes(tramo, escena)
     pintarFlecha(tramo, escena)
+    crearLineaDetencion(tramo, escena)
   }
 
   for (const id of CRUCES) {
     const n = NODOS[id]!
     const cruce = caja(2, 0.07, 2, 0x303a45)
+    cruce.userData.recibeSombra = true
     cruce.position.set(n.x, 0.195, n.z)
-    cruce.userData = { tipo: 'cruce', id }
+    cruce.userData = { ...cruce.userData, tipo: 'cruce', id }
     escena.add(cruce)
     seleccionables.push(cruce)
     cruces.set(id, cruce)
@@ -195,12 +214,6 @@ export function crearMaqueta(escena: THREE.Scene) {
     crearPaso(n.x + 1.15, n.z, true, escena)
     crearPaso(n.x, n.z - 1.15, false, escena)
     crearPaso(n.x, n.z + 1.15, false, escena)
-    const horizontal = caja(0.27, 0.12, 0.27, 0x32b575)
-    const vertical = caja(0.27, 0.12, 0.27, 0xe45b59)
-    horizontal.position.set(n.x + 0.69, 0.29, n.z - 0.68)
-    vertical.position.set(n.x - 0.69, 0.29, n.z + 0.68)
-    escena.add(horizontal, vertical)
-    indicadores.set(id, { horizontal, vertical })
   }
 
   const edificios: [number, number, number][] = [
@@ -226,5 +239,5 @@ export function crearMaqueta(escena: THREE.Scene) {
   ] as const) {
     escena.add(...crearArbol(x, z))
   }
-  return { seleccionables, calles, cruces, indicadores }
+  return { seleccionables, calles, cruces }
 }

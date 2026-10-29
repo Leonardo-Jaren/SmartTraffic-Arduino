@@ -28,6 +28,7 @@ Las esquinas se describen tal como se ven en la foto de la pizarra. Los nombres 
 
 - El usuario confirma **seis semáforos físicos**, y ubicó el sexto al lado izquierdo de I4. Se usa una asignación práctica de uno por cruce, numerados S1–S6 de la misma forma que I1–I6.
 - Diseño inicial: orientar los seis semáforos hacia los vehículos que circulan por las horizontales H1 y H2; la vía vertical sin semáforo tendrá **ceda el paso**, como indicó el usuario. Una sola luz de tres colores no muestra estados independientes para ambos movimientos. Ceder el paso depende de que los vehículos respeten la señal; no lo impone el Arduino.
+- En la escena 3D de simulación se muestran luces virtuales para V para hacer visible la fase que siguen esos vehículos. No representan semáforos físicos confirmados y se ocultan en el modo dispositivo.
 - No hay medidas que permitan calcular una escala física ni tiempos reales de una ola verde. La simulación usa una escala explícita y provisional de 5 metros por unidad, no una medición de la maqueta.
 
 La geometría es una aproximación a las imágenes y los sentidos están confirmados por el usuario. Antes de activar el ciclo físico hay que comprobar que cada S está cableado en el cruce de la tabla y mira hacia la vía horizontal correspondiente. Si una luz se instala para una vía vertical, debe ajustarse su `EJE` en el sketch.

@@ -49,6 +49,10 @@ export const ENTRADAS = Object.values(NODOS).filter((n) => n.tipo === 'entrada')
 export const SALIDAS = Object.values(NODOS).filter((n) => n.tipo === 'salida')
 export const METROS_POR_UNIDAD = 5
 export const VELOCIDAD_OLA = 30
+export const SEPARACION_SEGURA_VEHICULOS = 1.8
+export const DISTANCIA_LINEA_CRUCE = 1.85
+export const DISTANCIA_LIBRE_CRUCE = 2
+export const RADIO_GIRO_VEHICULO = 0.9
 
 // S1–S6 son una asignación de instalación propuesta, uno por cruce.
 // Las esquinas se aproximan a los puntos de la pizarra; I4 se ubica al lado izquierdo.
@@ -60,6 +64,14 @@ export const SEMAFOROS_BASE = [
   { id: 'S5', cruce: 'I5', dx: 1.3, dz: 1.3 },
   { id: 'S6', cruce: 'I6', dx: 1.3, dz: -1.3 },
 ] as const
+
+export function obtenerRotacionSemaforo(cruce: string, eje: Eje): number {
+  const entrada = TRAMOS.find((tramo) => tramo.hacia === cruce && tramo.eje === eje)
+  if (!entrada) return 0
+  const origen = NODOS[entrada.de]!
+  const destino = NODOS[entrada.hacia]!
+  return Math.atan2(origen.x - destino.x, origen.z - destino.z)
+}
 
 export function obtenerTramo(id: string): Tramo | undefined {
   return TRAMOS.find((tramo) => tramo.id === id)

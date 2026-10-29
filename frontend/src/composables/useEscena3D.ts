@@ -46,7 +46,7 @@ export function useEscena3D(
       renderizador.setPixelRatio(Math.min(window.devicePixelRatio, 2))
       renderizador.outputColorSpace = THREE.SRGBColorSpace
       renderizador.shadowMap.enabled = true
-      renderizador.shadowMap.type = THREE.PCFShadowMap
+      renderizador.shadowMap.type = THREE.PCFSoftShadowMap
       renderizador.toneMapping = THREE.ACESFilmicToneMapping
       renderizador.toneMappingExposure = 1.18
       elemento.appendChild(renderizador.domElement)
@@ -54,7 +54,7 @@ export function useEscena3D(
       const sol = new THREE.DirectionalLight(0xffeed2, 3)
       sol.position.set(-8, 18, 12)
       sol.castShadow = true
-      const resolucionSombra = window.innerWidth < 700 ? 1024 : 2048
+      const resolucionSombra = window.innerWidth < 700 ? 512 : 1024
       sol.shadow.mapSize.set(resolucionSombra, resolucionSombra)
       Object.assign(sol.shadow.camera, { left: -17, right: 17, top: 17, bottom: -17, near: 1, far: 65 })
       sol.shadow.bias = -0.001
@@ -70,8 +70,8 @@ export function useEscena3D(
       const maqueta = crearMaqueta(escena)
       escena.traverse((objeto) => {
         if (objeto instanceof THREE.Mesh) {
-          objeto.castShadow = true
-          objeto.receiveShadow = true
+          objeto.castShadow = objeto.userData.proyectaSombra === true
+          objeto.receiveShadow = objeto.userData.recibeSombra === true
         }
       })
       const dinamicos = crearDinamicos(escena, maqueta)
@@ -129,13 +129,17 @@ export function useEscena3D(
         controles.dispose()
         renderizador.domElement.removeEventListener('pointerdown', iniciarPuntero)
         renderizador.domElement.removeEventListener('pointerup', terminarPuntero)
+        const geometrias = new Set<THREE.BufferGeometry>()
+        const materiales = new Set<THREE.Material>()
         escena.traverse((objeto) => {
           if (objeto instanceof THREE.Mesh) {
-            objeto.geometry.dispose()
-            const materiales = Array.isArray(objeto.material) ? objeto.material : [objeto.material]
-            materiales.forEach((material) => material.dispose())
+            geometrias.add(objeto.geometry)
+            const listaMateriales = Array.isArray(objeto.material) ? objeto.material : [objeto.material]
+            listaMateriales.forEach((material) => materiales.add(material))
           }
         })
+        geometrias.forEach((geometria) => geometria.dispose())
+        materiales.forEach((material) => material.dispose())
         renderizador.dispose()
         renderizador.domElement.remove()
       }

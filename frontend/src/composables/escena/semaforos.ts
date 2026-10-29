@@ -7,22 +7,28 @@ const APAGADOS: Record<ColorSemaforo, number> = { rojo: 0x542e2d, amarillo: 0x56
 export function crearSemaforo() {
   const grupo = new THREE.Group()
   const poste = new THREE.Mesh(
-    new THREE.BoxGeometry(0.1, 1.05, 0.1),
-    new THREE.MeshStandardMaterial({ color: 0x4a5961 }),
+    new THREE.CylinderGeometry(0.065, 0.095, 1.32, 12),
+    new THREE.MeshStandardMaterial({ color: 0x54646b, metalness: 0.58, roughness: 0.36 }),
   )
-  poste.position.y = 0.53
+  poste.position.y = 0.68
   const carcasa = new THREE.Mesh(
-    new THREE.BoxGeometry(0.48, 0.98, 0.18),
-    new THREE.MeshStandardMaterial({ color: 0x202b32 }),
+    new THREE.BoxGeometry(0.5, 1.08, 0.34),
+    new THREE.MeshStandardMaterial({ color: 0x202b32, metalness: 0.25, roughness: 0.48 }),
   )
-  carcasa.position.y = 1.22
+  carcasa.position.set(0, 1.58, 0)
   grupo.add(poste, carcasa)
   const pie = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.15, 0.2, 0.12, 12),
-    new THREE.MeshStandardMaterial({ color: 0x68767d, roughness: 0.65 }),
+    new THREE.CylinderGeometry(0.19, 0.24, 0.14, 16),
+    new THREE.MeshStandardMaterial({ color: 0x68767d, metalness: 0.42, roughness: 0.55 }),
   )
   pie.position.y = 0.06
   grupo.add(pie)
+  const abrazadera = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.11, 0.11, 0.1, 12),
+    new THREE.MeshStandardMaterial({ color: 0x26353c, metalness: 0.4, roughness: 0.48 }),
+  )
+  abrazadera.position.y = 1.12
+  grupo.add(abrazadera)
   const aroSeleccion = new THREE.Mesh(
     new THREE.TorusGeometry(0.29, 0.035, 8, 24),
     new THREE.MeshBasicMaterial({ color: 0x39e2b0 }),
@@ -34,22 +40,34 @@ export function crearSemaforo() {
   const focos = {} as Record<ColorSemaforo, THREE.Mesh>
   ;(['rojo', 'amarillo', 'verde'] as const).forEach((color, indice) => {
     const foco = new THREE.Mesh(
-      new THREE.SphereGeometry(0.125, 12, 10),
-      new THREE.MeshStandardMaterial({ color: APAGADOS[color], emissive: 0x000000 }),
+      new THREE.CircleGeometry(0.097, 24),
+      new THREE.MeshStandardMaterial({
+        color: APAGADOS[color],
+        emissive: 0x000000,
+        roughness: 0.28,
+        metalness: 0.04,
+      }),
     )
-    foco.position.set(0, 1.52 - indice * 0.3, 0)
+    foco.position.set(0, 1.94 - indice * 0.34, 0.181)
     grupo.add(foco)
-    const visera = new THREE.Mesh(
-      new THREE.BoxGeometry(0.31, 0.045, 0.2),
-      new THREE.MeshStandardMaterial({ color: 0x17252b }),
+    const aro = new THREE.Mesh(
+      new THREE.TorusGeometry(0.108, 0.018, 8, 24),
+      new THREE.MeshStandardMaterial({ color: 0x10191d, roughness: 0.72 }),
     )
-    visera.position.set(0, 1.67 - indice * 0.3, 0.13)
+    aro.position.set(0, foco.position.y, 0.178)
+    grupo.add(aro)
+    const visera = new THREE.Mesh(
+      new THREE.BoxGeometry(0.34, 0.055, 0.25),
+      new THREE.MeshStandardMaterial({ color: 0x17252b, roughness: 0.52 }),
+    )
+    visera.position.set(0, foco.position.y + 0.12, 0.23)
     grupo.add(visera)
     focos[color] = foco
   })
-  grupo.traverse((objeto) => {
-    if (objeto instanceof THREE.Mesh) objeto.castShadow = true
-  })
+  for (const objeto of [poste, carcasa, pie, abrazadera]) {
+    objeto.castShadow = true
+    objeto.userData.proyectaSombra = true
+  }
   return { grupo, focos, aroSeleccion }
 }
 

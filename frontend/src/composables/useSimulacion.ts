@@ -32,7 +32,6 @@ export function useSimulacion() {
       tiempo.value += delta
       if (mostrarVehiculos.value) {
         vehiculos.value = avanzarVehiculos(vehiculos.value, delta, cierres.value, fases.value, velocidad.value)
-        if (vehiculos.value.length > cantidad.value) vehiculos.value.splice(cantidad.value)
         if (vehiculos.value.length < cantidad.value && tiempo.value - ultimoIngreso > 0.7) {
           const nuevo = crearVehiculo(siguienteVehiculo++, vehiculos.value, cierres.value)
           if (nuevo) vehiculos.value.push(nuevo)
