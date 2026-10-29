@@ -1,0 +1,140 @@
+@media (max-width: 1200px) {
+  .barra-lateral {
+    width: 190px;
+  }
+  .contenido {
+    padding: 25px;
+  }
+  .barra-superior {
+    padding: 0 25px;
+  }
+  .contenido-grid {
+    grid-template-columns: minmax(0, 1fr) 290px;
+  }
+  .semaforos-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .mapa-leyenda {
+    display: none;
+  }
+}
+@media (max-width: 920px) {
+  .barra-lateral {
+    width: 64px;
+    align-items: center;
+    padding: 22px 8px;
+  }
+  .marca {
+    padding: 0;
+  }
+  .marca > div,
+  .menu-titulo,
+  .navegacion a:not(.activo),
+  .navegacion a.activo span,
+  .lateral-inferior {
+    display: none;
+  }
+  .navegacion {
+    margin-top: 48px;
+  }
+  .navegacion a.activo {
+    font-size: 0;
+    padding: 12px;
+  }
+  .contenido-grid {
+    grid-template-columns: 1fr;
+  }
+  .columna-control {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .nota-escala {
+    align-self: start;
+  }
+  .mapa-viewport {
+    height: 480px;
+  }
+}
+@media (max-width: 600px) {
+  .barra-lateral {
+    display: none;
+  }
+  .barra-superior {
+    height: 55px;
+    padding: 0 16px;
+  }
+  .contenido {
+    padding: 20px 15px;
+  }
+  .titulo-pagina {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .titulo-pagina h1 {
+    font-size: 25px;
+  }
+  .selector-modo {
+    width: 100%;
+  }
+  .selector-modo button {
+    flex: 1;
+  }
+  .resumen-grid {
+    gap: 7px;
+  }
+  .resumen {
+    padding: 9px;
+    gap: 6px;
+    min-height: 58px;
+  }
+  .resumen-icono {
+    width: 29px;
+    height: 29px;
+  }
+  .resumen small {
+    font-size: 7px;
+  }
+  .resumen strong {
+    font-size: 14px;
+  }
+  .resumen em,
+  .resumen-flecha {
+    display: none;
+  }
+  .columna-control {
+    grid-template-columns: 1fr;
+  }
+  .mapa-cabecera {
+    align-items: start;
+  }
+  .mapa-cabecera p {
+    line-height: 1.45;
+  }
+  .badge-mapa {
+    font-size: 7px;
+  }
+  .mapa-viewport {
+    height: 370px;
+  }
+  .mapa-pie {
+    font-size: 8px;
+    flex-direction: column;
+  }
+  .mapa-ayuda {
+    font-size: 8px;
+    right: 12px;
+    left: 12px;
+    text-align: center;
+  }
+  .mapa-etiqueta {
+    font-size: 8px;
+  }
+  .semaforos-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .estado-conexion {
+    font-size: 9px;
+  }
+  .avatar {
+    display: none;
+  }
+}
