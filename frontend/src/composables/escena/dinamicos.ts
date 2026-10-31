@@ -112,7 +112,8 @@ export function crearDinamicos(escena: THREE.Group, maqueta: ReturnType<typeof c
   const autos = new Map<number, THREE.Group>()
   const luces = new Map<number, ReturnType<typeof crearSemaforo>>()
   const semaforos = SEMAFOROS_BASE.map((datos) => {
-    const semaforo = crearSemaforo()
+    const esSecundario = ['S7', 'S8', 'S9'].includes(datos.id)
+    const semaforo = crearSemaforo({ alturaBrazo: esSecundario ? 1.55 : 1.38 })
     const nodo = NODOS[datos.cruce]!
     semaforo.grupo.position.set(nodo.x + datos.dx, 0.2, nodo.z + datos.dz)
     semaforo.grupo.rotation.y = obtenerRotacionSemaforo(datos.cruce, datos.eje)
@@ -133,9 +134,26 @@ export function crearDinamicos(escena: THREE.Group, maqueta: ReturnType<typeof c
     mostrarVehiculos: boolean,
     dispositivo: EstadoDispositivo,
     ubicaciones: UbicacionSemaforo[],
+    desactivados: Set<string> = new Set(),
   ) {
     semaforos.forEach((semaforo, indice) => {
       const datos = SEMAFOROS_BASE[indice]!
+      const estaDesactivado = desactivados.has(datos.id)
+      if (estaDesactivado) {
+        semaforo.grupo.visible = false
+        semaforo.aroSeleccion.visible = false
+        colorearSemaforo(semaforo, null)
+        return
+      }
+      semaforo.grupo.visible = true
+
+      // Coexistencia realista en la misma esquina (I2: S2/S7, I4: S4/S8, I6: S6/S9)
+      const comparteConPrimario =
+        (datos.id === 'S7' && !desactivados.has('S2')) ||
+        (datos.id === 'S8' && !desactivados.has('S4')) ||
+        (datos.id === 'S9' && !desactivados.has('S6'))
+      semaforo.posteGrupo.visible = !comparteConPrimario
+
       semaforo.aroSeleccion.visible = seleccion?.tipo === 'semaforo' && seleccion.id === datos.id
       const ubicacion = ubicaciones.find((u) => u.id === datos.id)
       if (ubicacion) {

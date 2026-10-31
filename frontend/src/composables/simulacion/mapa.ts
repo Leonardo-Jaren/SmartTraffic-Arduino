@@ -60,14 +60,14 @@ export const RADIO_GIRO_VEHICULO = 0.9
 // El eje de cada luz sigue ese sentido confirmado para la simulación.
 export const SEMAFOROS_BASE = [
   { id: 'S1', cruce: 'I1', dx: -1.35, dz: 1.35, eje: 'vertical' },
-  { id: 'S2', cruce: 'I2', dx: 1.35, dz: -1.35, eje: 'horizontal' },
+  { id: 'S2', cruce: 'I2', dx: -1.35, dz: 1.35, eje: 'horizontal' },
   { id: 'S3', cruce: 'I3', dx: -1.35, dz: 1.35, eje: 'vertical' },
   { id: 'S4', cruce: 'I4', dx: -1.35, dz: -1.35, eje: 'horizontal' },
   { id: 'S5', cruce: 'I5', dx: 1.35, dz: -1.35, eje: 'vertical' },
   { id: 'S6', cruce: 'I6', dx: -1.35, dz: -1.35, eje: 'horizontal' },
-  { id: 'S7', cruce: 'I2', dx: -1.35, dz: -1.35, eje: 'vertical' },
-  { id: 'S8', cruce: 'I4', dx: 1.35, dz: 1.35, eje: 'vertical' },
-  { id: 'S9', cruce: 'I6', dx: 1.35, dz: 1.35, eje: 'vertical' },
+  { id: 'S7', cruce: 'I2', dx: -1.35, dz: 1.35, eje: 'vertical' },
+  { id: 'S8', cruce: 'I4', dx: -1.35, dz: -1.35, eje: 'vertical' },
+  { id: 'S9', cruce: 'I6', dx: -1.35, dz: -1.35, eje: 'vertical' },
 ] as const
 
 export function obtenerRotacionSemaforo(cruce: string, eje: Eje): number {

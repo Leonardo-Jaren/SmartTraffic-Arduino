@@ -1,13 +1,23 @@
 <script setup lang="ts">
-import { TrafficCone } from '@lucide/vue'
+import { RotateCcw, TrafficCone, Trash2 } from '@lucide/vue'
 import type { EstadoDispositivo, FaseCruce, Modo } from '@/types/trafico'
 import { SEMAFOROS_BASE } from '@/composables/simulacion/mapa'
 import { obtenerColorSemaforo } from '@/composables/simulacion/semaforos'
 
-const props = defineProps<{ fases: FaseCruce[]; modo: Modo; dispositivo: EstadoDispositivo }>()
-defineEmits<{ seleccionar: [id: string] }>()
+const props = defineProps<{
+  fases: FaseCruce[]
+  modo: Modo
+  dispositivo: EstadoDispositivo
+  desactivados?: Set<string>
+}>()
+defineEmits<{ seleccionar: [id: string]; alternar: [id: string] }>()
 
-function colorDe(indice: number): string {
+function estaDesactivado(id: string): boolean {
+  return Boolean(props.desactivados?.has(id))
+}
+
+function colorDe(indice: number, id: string): string {
+  if (estaDesactivado(id)) return 'gris'
   const c = obtenerColorSemaforo(indice, props.modo, props.fases, props.dispositivo)
   return c ?? 'gris'
 }
@@ -39,28 +49,100 @@ function colorDe(indice: number): string {
     </p>
 
     <div class="semaforos-grid">
-      <button
+      <div
         v-for="(semaforo, indice) in SEMAFOROS_BASE"
         :key="semaforo.id"
-        type="button"
-        class="semaforo-item"
-        :aria-label="`Seleccionar semáforo ${semaforo.id}, cruce ${semaforo.cruce}`"
-        @click="$emit('seleccionar', semaforo.id)"
+        :class="['semaforo-item', { desactivado: estaDesactivado(semaforo.id) }]"
       >
-        <div>
-          <span class="semaforo-icono">{{ semaforo.id }}</span>
-          <strong>{{ semaforo.cruce }} · {{ semaforo.eje === 'horizontal' ? 'H' : 'V' }}</strong>
-        </div>
-        <div class="fases-mini">
-          <span>
-            <i :class="['mini-punto', colorDe(indice)]"></i>
-            {{ colorDe(indice).toUpperCase() }}
-          </span>
-        </div>
-        <small v-if="modo === 'simulacion'">
-          {{ Math.ceil(fases.find((f) => f.id === semaforo.cruce)?.restante ?? 0) }} s
-        </small>
-      </button>
+        <button
+          type="button"
+          class="semaforo-boton-principal"
+          :aria-label="`Seleccionar semáforo ${semaforo.id}, cruce ${semaforo.cruce}`"
+          @click="$emit('seleccionar', semaforo.id)"
+        >
+          <div>
+            <span class="semaforo-icono">{{ semaforo.id }}</span>
+            <strong>{{ semaforo.cruce }} · {{ semaforo.eje === 'horizontal' ? 'H' : 'V' }}</strong>
+          </div>
+          <div class="fases-mini">
+            <span v-if="!estaDesactivado(semaforo.id)">
+              <i :class="['mini-punto', colorDe(indice, semaforo.id)]"></i>
+              {{ colorDe(indice, semaforo.id).toUpperCase() }}
+            </span>
+            <span v-else class="texto-inactivo">
+              ELIMINADO
+            </span>
+          </div>
+          <small v-if="modo === 'simulacion' && !estaDesactivado(semaforo.id)">
+            {{ Math.ceil(fases.find((f) => f.id === semaforo.cruce)?.restante ?? 0) }} s
+          </small>
+        </button>
+
+        <button
+          type="button"
+          class="boton-accion-semaforo"
+          :title="estaDesactivado(semaforo.id) ? 'Reactivar semáforo' : 'Eliminar / Desactivar semáforo'"
+          :aria-label="estaDesactivado(semaforo.id) ? `Reactivar ${semaforo.id}` : `Eliminar ${semaforo.id}`"
+          @click.stop="$emit('alternar', semaforo.id)"
+        >
+          <RotateCcw v-if="estaDesactivado(semaforo.id)" :size="14" />
+          <Trash2 v-else :size="14" />
+        </button>
+      </div>
     </div>
   </section>
 </template>
+
+<style scoped>
+.semaforo-item {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+  transition: opacity 0.2s, border-color 0.2s;
+}
+
+.semaforo-item.desactivado {
+  opacity: 0.55;
+  border-style: dashed;
+}
+
+.semaforo-boton-principal {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.boton-accion-semaforo {
+  background: transparent;
+  border: none;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px 8px;
+  cursor: pointer;
+  color: var(--color-texto-secundario, #9ba3af);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.boton-accion-semaforo:hover {
+  color: #ff6b6b;
+  background-color: rgba(255, 107, 107, 0.1);
+}
+
+.texto-inactivo {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #8c939f;
+  letter-spacing: 0.04em;
+}
+</style>

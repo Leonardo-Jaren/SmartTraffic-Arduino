@@ -5,14 +5,14 @@ describe('distribución visual de los nueve semáforos', () => {
   it('respeta las esquinas y las caras orientadas hacia el tráfico que vigilan', () => {
     expect(ubicacionesIniciales().map(({ id, esquina, giro }) => [id, esquina, giro])).toEqual([
       ['S1', 'SO', 0],
-      ['S2', 'NE', 90],
+      ['S2', 'SO', 90],
       ['S3', 'SO', 0],
       ['S4', 'NO', 270],
       ['S5', 'NE', 180],
       ['S6', 'NO', 270],
-      ['S7', 'NO', 180],
-      ['S8', 'SE', 0],
-      ['S9', 'SE', 0],
+      ['S7', 'SO', 180],
+      ['S8', 'NO', 0],
+      ['S9', 'NO', 0],
     ])
   })
   it('restaura una distribución válida sin alterar identificadores', () => {

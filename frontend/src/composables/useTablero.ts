@@ -67,6 +67,26 @@ export function useTablero() {
     seleccion.value = null
   }
 
+  function alternarSemaforo(id: string) {
+    simulacion.alternarSemaforo(id)
+  }
+
+  function desactivarSemaforoSeleccionado() {
+    if (!seleccion.value) return
+    if (seleccion.value.tipo === 'luz') {
+      simulacion.quitarLuz(Number(seleccion.value.id))
+      seleccion.value = null
+    } else if (seleccion.value.tipo === 'semaforo') {
+      simulacion.desactivarSemaforo(seleccion.value.id)
+    }
+  }
+
+  function reactivarSemaforoSeleccionado() {
+    if (seleccion.value?.tipo === 'semaforo') {
+      simulacion.activarSemaforo(seleccion.value.id)
+    }
+  }
+
   function cambiarSeleccion(valor: Seleccion) {
     seleccion.value = valor
   }
@@ -86,6 +106,9 @@ export function useTablero() {
     aplicarTiempos,
     agregarLuzSeleccionada,
     quitarLuzSeleccionada,
+    alternarSemaforo,
+    desactivarSemaforoSeleccionado,
+    reactivarSemaforoSeleccionado,
     cambiarSeleccion,
   }
 }

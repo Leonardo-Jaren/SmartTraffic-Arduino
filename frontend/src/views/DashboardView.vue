@@ -39,6 +39,9 @@ const {
   aplicarTiempos,
   agregarLuzSeleccionada,
   quitarLuzSeleccionada,
+  alternarSemaforo,
+  desactivarSemaforoSeleccionado,
+  reactivarSemaforoSeleccionado,
   cambiarSeleccion,
 } = useTablero()
 const { ubicaciones, ubicacionSeleccionada, aviso: avisoUbicacion } = disposicion
@@ -53,9 +56,11 @@ const {
   vehiculos,
   fases,
   lucesVirtuales,
+  semaforosDesactivados,
   detenidos,
   metrosPorUnidad,
   velocidadOla,
+  restaurarTodosSemaforos,
 } = simulacion
 const { estado, error: errorApi, enviando } = dispositivo
 const { contenedor, pantallaCompleta, abrirPantallaCompleta, cerrarPantallaCompleta } = usePantallaCompleta()
@@ -217,6 +222,7 @@ const { contenedor, pantallaCompleta, abrirPantallaCompleta, cerrarPantallaCompl
                 :mostrar-vehiculos="mostrarVehiculos"
                 :dispositivo="estado"
                 :ubicaciones="ubicaciones"
+                :desactivados="semaforosDesactivados"
                 @seleccionar="cambiarSeleccion"
               />
               <div class="mapa-pie">
@@ -228,7 +234,9 @@ const { contenedor, pantallaCompleta, abrirPantallaCompleta, cerrarPantallaCompl
               :fases="fases"
               :modo="modo"
               :dispositivo="estado"
+              :desactivados="semaforosDesactivados"
               @seleccionar="cambiarSeleccion({ tipo: 'semaforo', id: $event })"
+              @alternar="alternarSemaforo"
             />
           </div>
           <div class="columna-control">
@@ -257,12 +265,17 @@ const { contenedor, pantallaCompleta, abrirPantallaCompleta, cerrarPantallaCompl
               :cantidad-luces="lucesVirtuales.filter((luz) => luz.cruce === seleccion?.id).length"
               :ubicacion="ubicacionSeleccionada"
               :aviso-ubicacion="avisoUbicacion"
+              :desactivado="seleccion ? semaforosDesactivados.has(seleccion.id) : false"
+              :cantidad-desactivados="semaforosDesactivados.size"
               @reubicar="disposicion.reubicar"
               @girar="disposicion.girar"
               @restaurar="disposicion.restaurar"
               @cierre="seleccion && simulacion.alternarCierre(seleccion.id)"
               @agregar="agregarLuzSeleccionada"
               @quitar="quitarLuzSeleccionada"
+              @desactivar="desactivarSemaforoSeleccionado"
+              @activar="reactivarSemaforoSeleccionado"
+              @restaurar-semaforos="restaurarTodosSemaforos"
             />
             <PanelTiempos
               :tiempos="borrador"

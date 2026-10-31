@@ -11,7 +11,7 @@ export interface EdificioUrbano {
   giro: number
   pared: number
   acento: number
-  cubierta: 'tejas' | 'terraza' | 'pergola'
+  cubierta: 'tejas' | 'terraza' | 'pergola' | 'acanalada'
   escalonado?: boolean
 }
 
@@ -186,6 +186,31 @@ function crearTerraza(grupo: THREE.Group, ancho: number, fondo: number, y: numbe
   piezaUrbana(grupo, [ancho * 0.4, 0.1, 0.2], a.plantas, [0, y + 0.25, fondo * 0.32], 0.04)
 }
 
+function crearCubiertaAcanalada(grupo: THREE.Group, ancho: number, fondo: number, y: number) {
+  const matChapa = new THREE.MeshStandardMaterial({
+    color: 0xd8e0e6,
+    metalness: 0.88,
+    roughness: 0.26,
+  })
+  const baseTecho = piezaUrbana(grupo, [ancho + 0.12, 0.05, fondo + 0.12], matChapa, [0, y + 0.025, 0], 0.02)
+  baseTecho.userData.proyectaSombra = true
+
+  const paso = 0.13
+  const cantidad = Math.floor((fondo + 0.08) / paso)
+  const radioNervio = 0.016
+  const nervioGeom = new THREE.CylinderGeometry(radioNervio, radioNervio, ancho + 0.08, 8)
+  nervioGeom.rotateZ(Math.PI / 2)
+  const offset = -(cantidad * paso) / 2 + paso / 2
+
+  for (let i = 0; i < cantidad; i++) {
+    const costilla = new THREE.Mesh(nervioGeom, matChapa)
+    costilla.position.set(0, y + 0.052, offset + i * paso)
+    costilla.castShadow = true
+    costilla.userData.proyectaSombra = true
+    grupo.add(costilla)
+  }
+}
+
 export function crearEdificio(datos: EdificioUrbano) {
   const grupo = new THREE.Group()
   const a = crearAcabados(datos)
@@ -214,7 +239,8 @@ export function crearEdificio(datos: EdificioUrbano) {
   }
   decorarFachadas(grupo, datos, a)
   const yTecho = datos.alto + 0.27
-  if (datos.cubierta === 'tejas') crearTejado(grupo, anchoTecho, fondoTecho, yTecho, a)
+  if (datos.cubierta === 'acanalada') crearCubiertaAcanalada(grupo, anchoTecho, fondoTecho, yTecho)
+  else if (datos.cubierta === 'tejas') crearTejado(grupo, anchoTecho, fondoTecho, yTecho, a)
   else crearTerraza(grupo, anchoTecho, fondoTecho, yTecho, a, datos.cubierta === 'pergola')
   agruparPiezasUrbanas(grupo)
   grupo.position.set(datos.x, 0, datos.z)

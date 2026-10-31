@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CirclePlus, MapPin, X } from '@lucide/vue'
+import { CirclePlus, MapPin, RotateCcw, Trash2, X } from '@lucide/vue'
 import type { Eje, Modo, Seleccion, Esquina, UbicacionSemaforo } from '@/types/trafico'
 
 defineProps<{
@@ -14,8 +14,20 @@ defineProps<{
   cantidadLuces: number
   ubicacion: UbicacionSemaforo | null
   avisoUbicacion: string
+  desactivado?: boolean
+  cantidadDesactivados?: number
 }>()
-defineEmits<{ cierre: []; agregar: []; quitar: []; reubicar: [esquina: Esquina]; girar: []; restaurar: [] }>()
+defineEmits<{
+  cierre: []
+  agregar: []
+  quitar: []
+  reubicar: [esquina: Esquina]
+  girar: []
+  restaurar: []
+  desactivar: []
+  activar: []
+  restaurarSemaforos: []
+}>()
 const eje = defineModel<Eje>('eje', { required: true })
 </script>
 
@@ -58,6 +70,30 @@ const eje = defineModel<Eje>('eje', { required: true })
         pines del Arduino.
       </p>
       <p v-if="avisoUbicacion" class="aviso-inline">{{ avisoUbicacion }}</p>
+    </div>
+    <div v-if="seleccion?.tipo === 'semaforo'" class="acciones-semaforo" style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+      <button
+        v-if="desactivado"
+        class="boton primario ancho"
+        @click="$emit('activar')"
+      >
+        <RotateCcw :size="16" /> Reactivar semáforo
+      </button>
+      <button
+        v-else
+        class="boton secundario ancho"
+        style="color: #e65151; border-color: rgba(230, 81, 81, 0.35);"
+        @click="$emit('desactivar')"
+      >
+        <Trash2 :size="16" /> Eliminar / Desactivar semáforo
+      </button>
+      <button
+        v-if="cantidadDesactivados && cantidadDesactivados > 0"
+        class="boton secundario ancho"
+        @click="$emit('restaurarSemaforos')"
+      >
+        <RotateCcw :size="15" /> Restaurar todos ({{ cantidadDesactivados }} inactivos)
+      </button>
     </div>
     <template v-if="seleccion?.tipo === 'tramo'">
       <button class="boton secundario ancho" :disabled="modo !== 'simulacion'" @click="$emit('cierre')">

@@ -21,6 +21,7 @@ const props = defineProps<{
   mostrarVehiculos: boolean
   dispositivo: EstadoDispositivo
   ubicaciones: UbicacionSemaforo[]
+  desactivados?: Set<string>
 }>()
 const emit = defineEmits<{ seleccionar: [valor: Seleccion] }>()
 const contenedor = ref<HTMLElement | null>(null)

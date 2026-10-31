@@ -15,6 +15,7 @@ export function useSimulacion() {
   const cierres = ref(new Set<string>())
   const vehiculos = ref<Vehiculo[]>([])
   const lucesVirtuales = ref<LuzVirtual[]>([])
+  const semaforosDesactivados = ref<Set<string>>(new Set())
   const fases = computed(() => CRUCES.map((id) => calcularFase(id, tiempo.value, tiempos, cierres.value)))
   const detenidos = computed(() => vehiculos.value.filter((v) => v.detenido).length)
   const errorTiempos = ref('')
@@ -31,7 +32,14 @@ export function useSimulacion() {
     if (activo.value) {
       tiempo.value += delta
       if (mostrarVehiculos.value) {
-        vehiculos.value = avanzarVehiculos(vehiculos.value, delta, cierres.value, fases.value, velocidad.value)
+        vehiculos.value = avanzarVehiculos(
+          vehiculos.value,
+          delta,
+          cierres.value,
+          fases.value,
+          velocidad.value,
+          semaforosDesactivados.value,
+        )
         if (vehiculos.value.length < cantidad.value && tiempo.value - ultimoIngreso > 0.7) {
           const nuevo = crearVehiculo(siguienteVehiculo++, vehiculos.value, cierres.value)
           if (nuevo) vehiculos.value.push(nuevo)
@@ -47,6 +55,37 @@ export function useSimulacion() {
     if (nuevos.has(id)) nuevos.delete(id)
     else nuevos.add(id)
     cierres.value = nuevos
+  }
+
+  function alternarSemaforo(id: string) {
+    if (id.startsWith('S')) {
+      const nuevos = new Set(semaforosDesactivados.value)
+      if (nuevos.has(id)) nuevos.delete(id)
+      else nuevos.add(id)
+      semaforosDesactivados.value = nuevos
+    } else {
+      quitarLuz(Number(id))
+    }
+  }
+
+  function desactivarSemaforo(id: string) {
+    if (id.startsWith('S')) {
+      const nuevos = new Set(semaforosDesactivados.value)
+      nuevos.add(id)
+      semaforosDesactivados.value = nuevos
+    } else {
+      quitarLuz(Number(id))
+    }
+  }
+
+  function activarSemaforo(id: string) {
+    const nuevos = new Set(semaforosDesactivados.value)
+    nuevos.delete(id)
+    semaforosDesactivados.value = nuevos
+  }
+
+  function restaurarTodosSemaforos() {
+    semaforosDesactivados.value = new Set()
   }
 
   function reiniciar() {
@@ -84,6 +123,7 @@ export function useSimulacion() {
     animacion = requestAnimationFrame(avanzar)
   })
   onUnmounted(() => cancelAnimationFrame(animacion))
+
   return {
     activo,
     mostrarVehiculos,
@@ -96,11 +136,16 @@ export function useSimulacion() {
     vehiculos,
     fases,
     lucesVirtuales,
+    semaforosDesactivados,
     detenidos,
     errorTiempos,
     metrosPorUnidad: METROS_POR_UNIDAD,
     velocidadOla: VELOCIDAD_OLA,
     alternarCierre,
+    alternarSemaforo,
+    desactivarSemaforo,
+    activarSemaforo,
+    restaurarTodosSemaforos,
     reiniciar,
     aplicarTiempos,
     agregarLuz,

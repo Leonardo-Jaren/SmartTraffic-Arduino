@@ -7,6 +7,7 @@ import {
   METROS_POR_UNIDAD,
   NODOS,
   SALIDAS,
+  SEMAFOROS_BASE,
   SEPARACION_SEGURA_VEHICULOS,
   TRAMOS,
   obtenerTramo,
@@ -137,6 +138,7 @@ export function avanzarVehiculos(
   cierres: Set<string>,
   fases: FaseCruce[],
   velocidad: number,
+  semaforosDesactivados: Set<string> = new Set(),
 ): Vehiculo[] {
   const paso = Number.isFinite(segundos) ? Math.max(0, Math.min(segundos, 0.1)) : 0
   const rapidez = Number.isFinite(velocidad) ? Math.max(0, velocidad) : 0
@@ -216,7 +218,10 @@ export function avanzarVehiculos(
             otro.progreso < DISTANCIA_LIBRE_CRUCE + SEPARACION_SEGURA_VEHICULOS,
         )
 
-        const luzVerde = Boolean(fase && fase[tramo.eje] === 'verde')
+        // Si el semáforo para este cruce y eje fue desactivado por el usuario, el paso queda libre
+        const semaforoControl = SEMAFOROS_BASE.find((s) => s.cruce === destino.id && s.eje === tramo.eje)
+        const semaforoInactivo = semaforoControl ? semaforosDesactivados.has(semaforoControl.id) : false
+        const luzVerde = semaforoInactivo || Boolean(fase && fase[tramo.eje] === 'verde')
 
         // Si la luz NO es verde, o cruce ocupado, o sin salida: DETENERSE en la línea de parada
         if (!rutaDisponible || !luzVerde || cruceOcupado || !salidaLibre) {

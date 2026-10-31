@@ -24,6 +24,7 @@ interface EstadoEscena {
   mostrarVehiculos: boolean
   dispositivo: EstadoDispositivo
   ubicaciones: UbicacionSemaforo[]
+  desactivados?: Set<string>
 }
 
 export function useEscena3D(
@@ -152,6 +153,7 @@ export function useEscena3D(
           estado.mostrarVehiculos,
           estado.dispositivo,
           estado.ubicaciones,
+          estado.desactivados,
         )
         controles.update()
         // Al girar la vista inicial, mantiene todos los bordes dentro del cuadro.

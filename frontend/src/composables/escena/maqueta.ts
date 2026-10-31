@@ -72,6 +72,39 @@ function crearPaso(x: number, z: number, horizontal: boolean, escena: THREE.Grou
   }
 }
 
+function pintarLineasAmarillas(tramo: (typeof TRAMOS)[number], escena: THREE.Group) {
+  const a = NODOS[tramo.de]!
+  const b = NODOS[tramo.hacia]!
+  const dx = (b.x - a.x) / tramo.longitud
+  const dz = (b.z - a.z) / tramo.longitud
+  const margenA = a.tipo === 'cruce' ? 1.6 : 0.4
+  const margenB = b.tipo === 'cruce' ? 1.6 : 0.4
+  const espacio = tramo.longitud - margenA - margenB
+  if (espacio <= 0.6) return
+
+  const largoFranja = 0.45
+  const separacion = 0.35
+  const paso = largoFranja + separacion
+  const cantidad = Math.floor(espacio / paso)
+  const inicio = margenA + (espacio - (cantidad * paso - separacion)) / 2
+
+  for (let i = 0; i < cantidad; i++) {
+    const d = inicio + i * paso + largoFranja / 2
+    const x = a.x + dx * d
+    const z = a.z + dz * d
+    const franja = new THREE.Mesh(
+      new THREE.BoxGeometry(
+        tramo.eje === 'horizontal' ? largoFranja : 0.08,
+        0.012,
+        tramo.eje === 'vertical' ? largoFranja : 0.08,
+      ),
+      new THREE.MeshBasicMaterial({ color: 0xf3c822 }),
+    )
+    franja.position.set(x, 0.231, z)
+    escena.add(franja)
+  }
+}
+
 function crearLineaDetencion(tramo: (typeof TRAMOS)[number], escena: THREE.Group) {
   if (NODOS[tramo.hacia]!.tipo !== 'cruce') return
   const a = NODOS[tramo.de]!
@@ -112,6 +145,7 @@ export function crearMaqueta(escena: THREE.Group) {
     seleccionables.push(carretera)
     calles.set(tramo.id, carretera)
     crearBordes(tramo, escena)
+    pintarLineasAmarillas(tramo, escena)
     pintarFlecha(tramo, escena)
     crearLineaDetencion(tramo, escena)
   }

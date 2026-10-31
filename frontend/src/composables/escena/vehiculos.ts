@@ -7,7 +7,7 @@ function piezaRedondeada(
   tamano: [number, number, number],
   material: THREE.Material,
   posicion: [number, number, number],
-  radio = 0.045,
+  radio = 0.03,
 ) {
   const malla = new THREE.Mesh(new RoundedBoxGeometry(...tamano, 3, radio), material)
   malla.position.set(...posicion)
@@ -18,16 +18,16 @@ function piezaRedondeada(
 }
 
 function crearCabina(grupo: THREE.Group, cristal: THREE.Material, carroceria: THREE.Material) {
-  // Habitáculo acristalado aerodinámico
+  // Habitáculo acristalado estilizado proporcionado a la escala de la maqueta
   const vertices = [
-    [-0.33, 0.44, -0.52],
-    [0.33, 0.44, -0.52],
-    [0.33, 0.44, 0.38],
-    [-0.33, 0.44, 0.38],
-    [-0.27, 0.73, -0.34],
-    [0.27, 0.73, -0.34],
-    [0.27, 0.73, 0.12],
-    [-0.27, 0.73, 0.12],
+    [-0.23, 0.3, -0.36],
+    [0.23, 0.3, -0.36],
+    [0.23, 0.3, 0.26],
+    [-0.23, 0.3, 0.26],
+    [-0.19, 0.5, -0.24],
+    [0.19, 0.5, -0.24],
+    [0.19, 0.5, 0.08],
+    [-0.19, 0.5, 0.08],
   ]
   const caras = [
     [3, 2, 6, 7], // Parabrisas delantero
@@ -44,16 +44,16 @@ function crearCabina(grupo: THREE.Group, cristal: THREE.Material, carroceria: TH
   cabinaMesh.castShadow = true
   grupo.add(cabinaMesh)
 
-  // Pilares estructurales de la carrocería (A, B y C)
+  // Pilares A, B y C de la carrocería
   for (const lado of [-1, 1]) {
     for (const [baseZ, techoZ] of [
-      [0.38, 0.12],
-      [-0.1, -0.1],
-      [-0.52, -0.34],
+      [0.26, 0.08],
+      [-0.07, -0.07],
+      [-0.36, -0.24],
     ]) {
-      const inicio = new THREE.Vector3(lado * 0.33, 0.44, baseZ)
-      const fin = new THREE.Vector3(lado * 0.27, 0.73, techoZ)
-      const pilar = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.022, inicio.distanceTo(fin), 8), carroceria)
+      const inicio = new THREE.Vector3(lado * 0.23, 0.3, baseZ)
+      const fin = new THREE.Vector3(lado * 0.19, 0.5, techoZ)
+      const pilar = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.016, inicio.distanceTo(fin), 8), carroceria)
       pilar.position.copy(inicio).add(fin).multiplyScalar(0.5)
       pilar.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), fin.sub(inicio).normalize())
       pilar.castShadow = true
@@ -61,8 +61,8 @@ function crearCabina(grupo: THREE.Group, cristal: THREE.Material, carroceria: TH
     }
   }
 
-  // Techo estilizado con relieve
-  piezaRedondeada(grupo, [0.58, 0.065, 0.52], carroceria, [0, 0.74, -0.11], 0.025)
+  // Techo estilizado
+  piezaRedondeada(grupo, [0.4, 0.045, 0.36], carroceria, [0, 0.51, -0.08], 0.02)
 }
 
 export function crearVehiculo(color: number) {
@@ -70,27 +70,27 @@ export function crearVehiculo(color: number) {
 
   const carroceria = new THREE.MeshPhysicalMaterial({
     color,
-    metalness: 0.28,
-    roughness: 0.24,
+    metalness: 0.3,
+    roughness: 0.22,
     clearcoat: 0.85,
     clearcoatRoughness: 0.15,
   })
 
   const cristal = new THREE.MeshPhysicalMaterial({
-    color: 0x223644,
-    metalness: 0.3,
-    roughness: 0.1,
+    color: 0x1e303c,
+    metalness: 0.35,
+    roughness: 0.08,
     clearcoat: 1.0,
     clearcoatRoughness: 0.05,
   })
 
-  const caucho = new THREE.MeshStandardMaterial({ color: 0x181c1f, roughness: 0.88 })
+  const caucho = new THREE.MeshStandardMaterial({ color: 0x181c1f, roughness: 0.9 })
   const metalRin = new THREE.MeshStandardMaterial({ color: 0xdde4e8, metalness: 0.85, roughness: 0.22 })
-  const negroMoldura = new THREE.MeshStandardMaterial({ color: 0x1c2429, roughness: 0.6 })
+  const negroMoldura = new THREE.MeshStandardMaterial({ color: 0x1a2126, roughness: 0.65 })
   const faro = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     emissive: 0xfff4db,
-    emissiveIntensity: 0.45,
+    emissiveIntensity: 0.5,
     roughness: 0.18,
   })
   const freno = new THREE.MeshStandardMaterial({
@@ -100,40 +100,40 @@ export function crearVehiculo(color: number) {
     roughness: 0.2,
   })
 
-  // 1. Chasis y cuerpo inferior estilizado
-  piezaRedondeada(grupo, [0.84, 0.26, 1.54], carroceria, [0, 0.32, 0], 0.09)
+  // 1. Chasis y cuerpo inferior estilizado (proporcionado para una maqueta de 160×120 cm)
+  piezaRedondeada(grupo, [0.55, 0.18, 1.1], carroceria, [0, 0.22, 0], 0.05)
 
-  // Capó descendente y faldones laterales
-  piezaRedondeada(grupo, [0.74, 0.11, 0.52], carroceria, [0, 0.44, 0.48], 0.06)
-  piezaRedondeada(grupo, [0.72, 0.12, 0.36], carroceria, [0, 0.44, -0.57], 0.06)
+  // Capó descendente y maletero
+  piezaRedondeada(grupo, [0.48, 0.075, 0.35], carroceria, [0, 0.3, 0.35], 0.04)
+  piezaRedondeada(grupo, [0.48, 0.08, 0.25], carroceria, [0, 0.3, -0.41], 0.04)
 
-  // Molduras protectoras / pasarruedas (wheel arches)
+  // Molduras laterales y espejos retrovisores
   for (const lado of [-1, 1]) {
-    for (const z of [-0.49, 0.49]) {
-      piezaRedondeada(grupo, [0.055, 0.15, 0.44], negroMoldura, [lado * 0.42, 0.26, z], 0.025)
+    for (const z of [-0.34, 0.34]) {
+      piezaRedondeada(grupo, [0.038, 0.11, 0.3], negroMoldura, [lado * 0.28, 0.18, z], 0.018)
     }
     // Espejos retrovisores
-    piezaRedondeada(grupo, [0.065, 0.055, 0.095], carroceria, [lado * 0.45, 0.53, 0.28], 0.02)
-    piezaRedondeada(grupo, [0.04, 0.035, 0.08], negroMoldura, [lado * 0.45, 0.53, 0.27], 0.015)
+    piezaRedondeada(grupo, [0.045, 0.038, 0.065], carroceria, [lado * 0.3, 0.36, 0.19], 0.015)
+    piezaRedondeada(grupo, [0.025, 0.024, 0.055], negroMoldura, [lado * 0.3, 0.36, 0.18], 0.01)
   }
 
-  // 2. Cabina con cristales
+  // 2. Cabina aerodinámica
   crearCabina(grupo, cristal, carroceria)
 
-  // 3. Ruedas detalladas (llantas de aleación con neumáticos de goma alineados al eje X)
-  const radioRueda = 0.19
-  const anchoNeumatico = 0.13
-  const ruedaGeom = new THREE.CylinderGeometry(radioRueda, radioRueda, anchoNeumatico, 24)
+  // 3. Ruedas detalladas (llantas de aleación y neumáticos de goma)
+  const radioRueda = 0.13
+  const anchoNeumatico = 0.09
+  const ruedaGeom = new THREE.CylinderGeometry(radioRueda, radioRueda, anchoNeumatico, 20)
   ruedaGeom.rotateZ(Math.PI / 2)
 
-  const rinGeom = new THREE.CylinderGeometry(0.12, 0.12, anchoNeumatico + 0.006, 20)
+  const rinGeom = new THREE.CylinderGeometry(0.085, 0.085, anchoNeumatico + 0.005, 18)
   rinGeom.rotateZ(Math.PI / 2)
 
-  const centroGeom = new THREE.CylinderGeometry(0.042, 0.042, anchoNeumatico + 0.015, 16)
+  const centroGeom = new THREE.CylinderGeometry(0.03, 0.03, anchoNeumatico + 0.01, 14)
   centroGeom.rotateZ(Math.PI / 2)
 
   // Radios de la llanta
-  const rayo1 = new THREE.BoxGeometry(anchoNeumatico + 0.01, 0.022, 0.2)
+  const rayo1 = new THREE.BoxGeometry(anchoNeumatico + 0.008, 0.016, 0.14)
   const rayo2 = rayo1.clone().rotateX(Math.PI / 3)
   const rayo3 = rayo1.clone().rotateX(-Math.PI / 3)
   const radiosGeom = mergeGeometries([rayo1, rayo2, rayo3])!
@@ -142,8 +142,8 @@ export function crearVehiculo(color: number) {
   rayo3.dispose()
 
   const ruedas: THREE.Group[] = []
-  for (const x of [-0.41, 0.41]) {
-    for (const z of [-0.49, 0.49]) {
+  for (const x of [-0.27, 0.27]) {
+    for (const z of [-0.34, 0.34]) {
       const conjunto = new THREE.Group()
       conjunto.position.set(x, radioRueda, z)
 
@@ -166,26 +166,22 @@ export function crearVehiculo(color: number) {
     }
   }
 
-  // 4. Parachoques y parrilla delantera
-  piezaRedondeada(grupo, [0.76, 0.08, 0.06], negroMoldura, [0, 0.19, 0.78], 0.02)
-  piezaRedondeada(grupo, [0.38, 0.07, 0.04], negroMoldura, [0, 0.28, 0.8], 0.015)
-  // Rejilla central
-  for (let i = -1; i <= 1; i++) {
-    piezaRedondeada(grupo, [0.32, 0.014, 0.02], metalRin, [0, 0.28 + i * 0.024, 0.812], 0.006)
-  }
+  // 4. Parachoques delantero y parrilla
+  piezaRedondeada(grupo, [0.52, 0.06, 0.04], negroMoldura, [0, 0.14, 0.56], 0.015)
+  piezaRedondeada(grupo, [0.26, 0.05, 0.03], negroMoldura, [0, 0.21, 0.575], 0.01)
 
   // Parachoques y difusor trasero
-  piezaRedondeada(grupo, [0.76, 0.08, 0.06], negroMoldura, [0, 0.2, -0.78], 0.02)
-  piezaRedondeada(grupo, [0.32, 0.05, 0.03], metalRin, [0, 0.18, -0.795], 0.012)
+  piezaRedondeada(grupo, [0.52, 0.06, 0.04], negroMoldura, [0, 0.15, -0.56], 0.015)
+  piezaRedondeada(grupo, [0.22, 0.04, 0.025], metalRin, [0, 0.13, -0.57], 0.01)
 
-  // Faros delanteros (blancos brillantes)
-  for (const x of [-0.28, 0.28]) {
-    piezaRedondeada(grupo, [0.18, 0.075, 0.05], faro, [x, 0.36, 0.79], 0.028)
+  // Faros delanteros
+  for (const x of [-0.19, 0.19]) {
+    piezaRedondeada(grupo, [0.12, 0.05, 0.03], faro, [x, 0.26, 0.565], 0.018)
   }
 
-  // Pilotos traseros (rojos emisivos)
-  for (const x of [-0.28, 0.28]) {
-    piezaRedondeada(grupo, [0.18, 0.075, 0.05], freno, [x, 0.36, -0.79], 0.025)
+  // Pilotos traseros
+  for (const x of [-0.19, 0.19]) {
+    piezaRedondeada(grupo, [0.12, 0.05, 0.03], freno, [x, 0.26, -0.565], 0.018)
   }
 
   grupo.userData.ruedas = ruedas
@@ -195,12 +191,12 @@ export function crearVehiculo(color: number) {
 
 export function animarVehiculo(grupo: THREE.Group, distancia: number, detenido: boolean) {
   const ruedas = grupo.userData.ruedas as THREE.Group[]
-  const radio = 0.19
+  const radio = 0.13
   const giroX = distancia / radio
   ruedas.forEach((rueda) => {
-    // Giro puro sobre el eje horizontal de la rueda (X), sin acoplamiento Euler vertical
+    // Giro fluido sobre el eje horizontal de la rueda (X)
     rueda.rotation.x += giroX
   })
   const frenos = grupo.userData.lucesFreno as THREE.MeshStandardMaterial
-  frenos.emissiveIntensity = detenido ? 1.5 : 0.35
+  frenos.emissiveIntensity = detenido ? 1.6 : 0.35
 }
