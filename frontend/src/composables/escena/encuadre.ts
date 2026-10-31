@@ -30,7 +30,7 @@ export function calcularDistanciaEncuadre(
   aspecto: number,
 ) {
   const { derecha, arriba } = ejesPantalla(direccion)
-  const tangente = Math.tan(THREE.MathUtils.degToRad(fov / 2)) * 0.88
+  const tangente = Math.tan(THREE.MathUtils.degToRad(fov / 2)) * 0.8
   let distancia = 0
   for (const punto of puntos) {
     const esquina = punto.clone().sub(centro)
