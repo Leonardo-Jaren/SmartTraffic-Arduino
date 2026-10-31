@@ -1,8 +1,6 @@
-# Análisis inicial de las imágenes
+# Análisis de la maqueta y esquema de semáforos (v-2.1)
 
-La fotografía de color muestra dos calles horizontales y tres verticales, con seis intersecciones. Hay tres filas de manzanas, pasos peatonales, zonas verdes, edificios de colores y una zona central ajardinada. La fotografía no proporciona medidas ni muestra claramente los semáforos.
-
-El usuario confirmó los siguientes sentidos de circulación, interpretados de las flechas de la pizarra. Se numeran los cruces de izquierda a derecha, primero la fila superior y luego la inferior:
+La maqueta física cuenta con dos avenidas principales horizontales (H1 y H2) y tres calles secundarias verticales (V1, V2 y V3), formando seis intersecciones (I1 a I6).
 
 ```text
                V1 ↑             V2 ↓             V3 ↑
@@ -11,25 +9,42 @@ H1  ←────────── I1 ──────────── I2
 H2  ─────────── I4 ──────────── I5 ──────────── I6 ─────────→
 ```
 
-H1 y H2 son las vías principales horizontales indicadas por el usuario; V1, V2 y V3 son secundarias. En cada cruce se intersectan las trayectorias horizontal y vertical. Los recorridos deben seguir las flechas y una calle cerrada puede obligar a tomar otra ruta o a detenerse.
+## Distribución de los 9 Semáforos (v-2.1)
 
-| Cruce | Semáforo | Posición del punto rojo | Cara hacia | Eje que vigila |
-|---|---|---|---|---|
-| I1 | S1 | Superior izquierda | Sur | V1, que circula al norte |
-| I2 | S2 | Inferior izquierda | Este | H1, que circula al oeste |
-| I3 | S3 | Superior izquierda | Sur | V3, que circula al norte |
-| I4 | S4 | Superior derecha | Oeste | H2, que circula al este |
-| I5 | S5 | Inferior derecha | Norte | V2, que circula al sur |
-| I6 | S6 | Superior derecha | Oeste | H2, que circula al este |
+En la versión 2.1, los 3 semáforos de las líneas horizontales (S2 en I2, S4 en I4 y S6 en I6) incorporan sus contrapartes perpendiculares en el mismo cruce (S7 en I2, S8 en I4 y S9 en I6) para regular tanto el flujo horizontal como el vertical de forma totalmente visible en 3D, sumando un total de **9 semáforos**:
 
-Las esquinas se describen tal como se ven en la foto de la pizarra. Los seis puntos rojos fijan las posiciones y las flechas rojas dibujadas junto a ellos indican hacia dónde mira cada luz. Cada luz mira contra el flujo que vigila para quedar visible al vehículo que se acerca.
+| Cruce | Semáforo | Esquina / Posición | Cara hacia | Eje que vigila | Función / Relación |
+|---|---|---|---|---|---|
+| I1 | S1 | SO (Inferior Izq) | Sur (+Z) | V1 (al Norte) | Regula flujo vertical en I1 |
+| I2 | S2 | NE (Superior Der) | Este (+X) | H1 (al Oeste) | Regula avenida horizontal en I2 |
+| I3 | S3 | SO (Inferior Izq) | Sur (+Z) | V3 (al Norte) | Regula flujo vertical en I3 |
+| I4 | S4 | NO (Superior Izq) | Oeste (-X) | H2 (al Este) | Regula avenida horizontal en I4 |
+| I5 | S5 | NE (Superior Der) | Norte (-Z) | V2 (al Sur) | Regula flujo vertical en I5 |
+| I6 | S6 | NO (Superior Izq) | Oeste (-X) | H2 (al Este) | Regula avenida horizontal en I6 |
+| I2 | S7 | NO (Superior Izq) | Norte (-Z) | V2 (al Sur) | **Contraparte de S2** en I2 (Vertical) |
+| I4 | S8 | SE (Inferior Der) | Sur (+Z) | V1 (al Norte) | **Contraparte de S4** en I4 (Vertical) |
+| I6 | S9 | SE (Inferior Der) | Sur (+Z) | V3 (al Norte) | **Contraparte de S6** en I6 (Vertical) |
 
-## Alcance del modelo y comprobación del montaje
+- **Orientación 3D realista**: Cada semáforo está posicionado sobre la acera del acceso correspondiente y su cara óptica (con viseras parasol y lentes emisivas) apunta directamente hacia los conductores que se aproximan en contraflujo.
+- **Contrapartes seguras**: En I2, I4 e I6, cuando el semáforo horizontal está en verde/amarillo, su contraparte vertical está en rojo estricto, y viceversa.
+- **Compatibilidad con Arduino UNO**: El Arduino UNO físico dispone de 18 pines para 6 semáforos físicos (S1–S6). La aplicación web mapea S7, S8 y S9 como contrapartes calculadas en tiempo real para mantener la seguridad vial garantizada tanto en modo Simulación como en modo Dispositivo.
 
-- El usuario confirma **seis semáforos** en las posiciones y orientaciones marcadas. La escena mantiene exactamente seis luces fijas: S1–S6, una por cruce.
-- La simulación asigna el eje que indican las flechas: S1/S3/S5 vigilan el eje V y S2/S4/S6 el eje H. Los vehículos obedecen la fase de su eje en cada cruce; que una fase se vea en la simulación no confirma que el Arduino o el cableado la controle.
-- Los otros seis accesos muestran señales pasivas de ceda el paso. No son semáforos adicionales ni representan salidas del Arduino; las fases H/V de la simulación siguen evitando movimientos simultáneos incompatibles.
-- El mapa eléctrico sigue pendiente de verificación. El sketch continúa bloqueado con `MAPA_CONFIRMADO=false`, y su asignación inicial de ejes no debe tomarse como cableado confirmado. Antes de habilitarlo hay que probar los 18 LEDs y comprobar qué grupo físico corresponde a cada eje.
-- El usuario indica que la base física mide **160 × 120 cm**; el tablero 3D se ajusta a ese tamaño. Las calles y edificios internos siguen siendo aproximados. La conversión de simulación (5 metros por unidad) solo calcula velocidades; no es una medición interna de la maqueta ni permite afirmar tiempos reales de ola verde.
+## Control Adaptativo ante Cierres de Calle (Relajación de Tráfico)
 
-La geometría y las coordenadas internas son una aproximación a las imágenes; las seis posiciones, caras y sentidos del esquema quedan representados en la vista. Antes de activar el ciclo físico hay que comprobar el mapa eléctrico, ajustar `EJE` según la tabla y verificar las señales de ceda. La guía PDF de conexiones conserva el diseño anterior con todos los ejes H; esta tabla documenta la orientación actual del modelo.
+- Al cerrar un tramo en la maqueta, el sistema analiza en tiempo real las entradas afectadas.
+- Si se bloquea un acceso vertical hacia un cruce, se minimiza la fase secundaria y se amplía el verde de la avenida horizontal para evacuar el tráfico sin paradas innecesarias.
+- Si se bloquea la avenida horizontal, se amplía el tiempo de verde de las vías secundarias adyacentes para dar paso prioritario a las rutas de desvío y relajar la congestión.
+
+## Mejoras de Vehículos y Dinámica 3D (v-2.1)
+
+1. **Diseño de vehículos y llantas**:
+   - Modelado con pasos de rueda esculpidos para evitar colisiones visuales entre el chasis y los neumáticos.
+   - Llantas de aleación deportiva con neumáticos de caucho biselados, alineados geométricamente al eje X horizontal.
+   - Rotación pura de rodadura sin oscilaciones ni acoplamientos angulares extraños.
+2. **Lógica de frenado en rojo**:
+   - Los vehículos detienen su marcha exactamente en la línea de parada ante luces rojas o amarillas.
+   - Las reservas de cruce sólo se efectúan tras cruzar la línea de detención con luz verde confirmada.
+3. **Prevención espacial de solapamientos**:
+   - Distancia de seguimiento 3D Euclidiana en plano XZ, evitando que vehículos en distintas calles o giros queden pegados o superpuestos.
+4. **Flujo continuo permanente (Anti-Deadlock Watchdog)**:
+   - Detección y resolución automática de bloqueos tras cierres viales sin salida para garantizar que la simulación no se detenga y continúe fluyendo indefinidamente.

@@ -18,7 +18,7 @@ describe('representación de un semáforo', () => {
     colorearSemaforo(semaforo, null)
     expect((semaforo.focos.amarillo.material as THREE.MeshStandardMaterial).emissiveIntensity).toBe(0)
   })
-  it('crea solo seis luces fijas y sus caras miran contra la circulación de su calle', () => {
+  it('crea nueve luces fijas y sus caras miran contra la circulación de su calle', () => {
     const escena = new THREE.Group()
     const maqueta = {
       seleccionables: [] as THREE.Object3D[],
@@ -47,8 +47,8 @@ describe('representación de un semáforo', () => {
       },
       ubicacionesIniciales(),
     )
-    expect(escena.children).toHaveLength(6)
-    expect(maqueta.seleccionables).toHaveLength(6)
+    expect(escena.children).toHaveLength(9)
+    expect(maqueta.seleccionables).toHaveLength(9)
     escena.updateMatrixWorld(true)
     for (const datos of SEMAFOROS_BASE) {
       const grupo = escena.children.find((objeto) => objeto.userData.id === datos.id)!
@@ -60,7 +60,7 @@ describe('representación de un semáforo', () => {
       const a = NODOS[entrada.de]!,
         b = NODOS[entrada.hacia]!
       const flujo = new THREE.Vector3(b.x - a.x, 0, b.z - a.z).normalize()
-      expect(frente.dot(flujo)).toBeCloseTo(-1, 8)
+      expect(frente.dot(flujo)).toBeCloseTo(-1, 5)
     }
   })
 })

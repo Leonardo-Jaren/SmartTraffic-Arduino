@@ -8,7 +8,7 @@ def interpretar_linea(linea):
     partes = linea.strip().split(',')
     if partes == ['INICIO', '1']:
         return {'tipo': 'inicio'}
-    if len(partes) == 8 and partes[0] == 'ESTADO' and partes[1] in MODOS:
+    if len(partes) in (8, 11) and partes[0] == 'ESTADO' and partes[1] in MODOS:
         if any(color not in COLORES for color in partes[2:]):
             raise ValueError('Color desconocido')
         return {'tipo': 'estado', 'modo': partes[1], 'colores': [COLORES[c] for c in partes[2:]]}

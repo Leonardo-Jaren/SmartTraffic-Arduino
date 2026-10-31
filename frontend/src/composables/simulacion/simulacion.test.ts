@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import type { EstadoDispositivo, FaseCruce, Vehiculo } from '@/types/trafico'
-import { calcularFase, TIEMPOS_INICIALES, validarTiempos } from './luces'
+import type { FaseCruce, Vehiculo, EstadoDispositivo } from '@/types/trafico'
 import { CRUCES, NODOS, SEMAFOROS_BASE, TRAMOS, obtenerRotacionSemaforo } from './mapa'
-import { analizarImpactos, calcularRuta } from './rutas'
-import { obtenerColorSemaforo } from './semaforos'
+import { calcularFase, TIEMPOS_INICIALES, validarTiempos, adaptarTiemposPorCierres } from './luces'
 import { avanzarVehiculos } from './vehiculos'
+import { calcularRuta, analizarImpactos } from './rutas'
+import { obtenerColorSemaforo } from './semaforos'
 
 function vehiculo(parcial: Partial<Vehiculo> = {}): Vehiculo {
   return {
@@ -15,7 +15,7 @@ function vehiculo(parcial: Partial<Vehiculo> = {}): Vehiculo {
     destino: 'H1O',
     detenido: '',
     reservado: null,
-    color: 0xffffff,
+    color: 0x53aee4,
     ...parcial,
   }
 }
@@ -25,7 +25,7 @@ function fase(horizontal: FaseCruce['horizontal'], vertical: FaseCruce['vertical
 }
 
 describe('sentidos y rutas', () => {
-  it('representa seis semáforos propuestos, uno por cruce', () => {
+  it('representa nueve semáforos propuestos con contrapartes en avenidas', () => {
     expect(SEMAFOROS_BASE.map((s) => [s.id, s.cruce])).toEqual([
       ['S1', 'I1'],
       ['S2', 'I2'],
@@ -33,6 +33,9 @@ describe('sentidos y rutas', () => {
       ['S4', 'I4'],
       ['S5', 'I5'],
       ['S6', 'I6'],
+      ['S7', 'I2'],
+      ['S8', 'I4'],
+      ['S9', 'I6'],
     ])
   })
   it('mantiene las cinco vías en los sentidos confirmados', () => {
@@ -45,7 +48,7 @@ describe('sentidos y rutas', () => {
       if (tramo.calle === 'V2') expect(b.z).toBeGreaterThan(a.z)
     }
   })
-  it('orienta las seis caras contra el flujo de la vía que vigilan', () => {
+  it('orienta las caras contra el flujo de la vía que vigilan', () => {
     for (const semaforo of SEMAFOROS_BASE) {
       const entrada = TRAMOS.find((tramo) => tramo.hacia === semaforo.cruce && tramo.eje === semaforo.eje)!
       const origen = NODOS[entrada.de]!
@@ -86,6 +89,9 @@ describe('fases seguras', () => {
       'verde',
       'rojo',
       'verde',
+      'rojo',
+      'rojo',
+      'rojo',
     ])
     expect(SEMAFOROS_BASE.map((_, i) => obtenerColorSemaforo(i, 'simulacion', faseV, dispositivo))).toEqual([
       'verde',
@@ -94,6 +100,9 @@ describe('fases seguras', () => {
       'rojo',
       'verde',
       'rojo',
+      'verde',
+      'verde',
+      'verde',
     ])
     expect(obtenerColorSemaforo(2, 'simulacion', fase('rojo', 'amarillo'), dispositivo)).toBe('amarillo')
     expect(obtenerColorSemaforo(2, 'dispositivo', fase('rojo', 'verde'), dispositivo)).toBe('verde')
@@ -116,6 +125,16 @@ describe('fases seguras', () => {
     expect(validarTiempos({ ...TIEMPOS_INICIALES, amarillo: 1 })).not.toBeNull()
     expect(validarTiempos({ ...TIEMPOS_INICIALES, principal: 15, secundaria: 20 })).not.toBeNull()
     expect(validarTiempos(TIEMPOS_INICIALES)).toBeNull()
+  })
+  it('adapta dinámicamente los tiempos ante cierres de calles para relajar el tráfico', () => {
+    // Al cerrar V1-2 hacia I1, el cruce I1 optimiza dando más verde a la avenida horizontal
+    const adaptados = adaptarTiemposPorCierres('I1', TIEMPOS_INICIALES, new Set(['V1-2']))
+    expect(adaptados.secundaria).toBe(10)
+    expect(adaptados.principal).toBeGreaterThan(TIEMPOS_INICIALES.principal)
+
+    // Al cerrar H1-2 hacia I2, se da más tiempo a la vía vertical para el desvío
+    const adaptadosH = adaptarTiemposPorCierres('I2', TIEMPOS_INICIALES, new Set(['H1-2']))
+    expect(adaptadosH.secundaria).toBeGreaterThan(TIEMPOS_INICIALES.secundaria)
   })
 })
 

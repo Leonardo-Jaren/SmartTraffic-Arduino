@@ -86,3 +86,9 @@ class PruebasDispositivo(TestCase):
         for linea in ('ESTADO,ACTIVO,R,R,R,R,R,X', 'ACK,0,APLICADO,OK', 'ACK,2,OTRO,OK'):
             with self.assertRaises(ValueError):
                 interpretar_linea(linea)
+
+    def test_protocolo_interpreta_nueve_colores(self):
+        linea = 'ESTADO,ACTIVO,R,V,A,R,V,A,R,V,A'
+        res = interpretar_linea(linea)
+        self.assertEqual(res['tipo'], 'estado')
+        self.assertEqual(len(res['colores']), 9)

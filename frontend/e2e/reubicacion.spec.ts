@@ -15,7 +15,7 @@ test('reubica y gira un semáforo, conserva su cruce y restaura la distribución
   await page.getByRole('button', { name: 'Pantalla completa', exact: true }).click()
   await expect(page.getByLabel('Esquina del semáforo')).toBeVisible()
   await page.getByRole('button', { name: 'Restaurar distribución inicial' }).click()
-  await expect(page.getByLabel('Esquina del semáforo')).toHaveValue('NO')
+  await expect(page.getByLabel('Esquina del semáforo')).toHaveValue('SO')
   await expect(page.getByRole('button', { name: 'Girar 90° · 0°' })).toBeVisible()
   await expect(page.getByText('Vigila el eje V · cara hacia el sur')).toBeVisible()
 })

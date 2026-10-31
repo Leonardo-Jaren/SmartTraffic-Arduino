@@ -18,9 +18,11 @@ export function crearSenalesCeda(escena: THREE.Group) {
   const placa = new THREE.ExtrudeGeometry(triangulo(0.5, 0.45), { depth: 0.035, bevelEnabled: false })
   const centro = new THREE.ShapeGeometry(triangulo(0.34, 0.28))
   const poste = new THREE.CylinderGeometry(0.027, 0.035, 0.94, 8)
-  for (const luz of SEMAFOROS_BASE) {
-    const eje = luz.eje === 'horizontal' ? 'vertical' : 'horizontal'
-    const entrada = TRAMOS.find((tramo) => tramo.hacia === luz.cruce && tramo.eje === eje)!
+  const accesosSinSemaforo = TRAMOS.filter((tramo) => {
+    if (NODOS[tramo.hacia]?.tipo !== 'cruce') return false
+    return !SEMAFOROS_BASE.some((s) => s.cruce === tramo.hacia && s.eje === tramo.eje)
+  })
+  for (const entrada of accesosSinSemaforo) {
     const a = NODOS[entrada.de]!,
       b = NODOS[entrada.hacia]!
     const dx = (b.x - a.x) / entrada.longitud
@@ -34,7 +36,7 @@ export function crearSenalesCeda(escena: THREE.Group) {
     cara.position.set(0, 1.04, 0.038)
     grupo.add(soporte, borde, cara)
     grupo.position.set(b.x - dx * 1.35 - dz * 1.35, 0.22, b.z - dz * 1.35 + dx * 1.35)
-    grupo.rotation.y = obtenerRotacionSemaforo(luz.cruce, eje)
+    grupo.rotation.y = obtenerRotacionSemaforo(entrada.hacia, entrada.eje)
     escena.add(grupo)
   }
 }

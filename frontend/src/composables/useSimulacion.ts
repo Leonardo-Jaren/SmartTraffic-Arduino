@@ -15,7 +15,7 @@ export function useSimulacion() {
   const cierres = ref(new Set<string>())
   const vehiculos = ref<Vehiculo[]>([])
   const lucesVirtuales = ref<LuzVirtual[]>([])
-  const fases = computed(() => CRUCES.map((id) => calcularFase(id, tiempo.value, tiempos)))
+  const fases = computed(() => CRUCES.map((id) => calcularFase(id, tiempo.value, tiempos, cierres.value)))
   const detenidos = computed(() => vehiculos.value.filter((v) => v.detenido).length)
   const errorTiempos = ref('')
   let siguienteVehiculo = 0

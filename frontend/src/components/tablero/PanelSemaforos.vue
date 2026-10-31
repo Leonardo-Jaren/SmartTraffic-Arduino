@@ -1,9 +1,16 @@
 <script setup lang="ts">
 import { TrafficCone } from '@lucide/vue'
 import type { EstadoDispositivo, FaseCruce, Modo } from '@/types/trafico'
+import { SEMAFOROS_BASE } from '@/composables/simulacion/mapa'
+import { obtenerColorSemaforo } from '@/composables/simulacion/semaforos'
 
-defineProps<{ fases: FaseCruce[]; modo: Modo; dispositivo: EstadoDispositivo }>()
+const props = defineProps<{ fases: FaseCruce[]; modo: Modo; dispositivo: EstadoDispositivo }>()
 defineEmits<{ seleccionar: [id: string] }>()
+
+function colorDe(indice: number): string {
+  const c = obtenerColorSemaforo(indice, props.modo, props.fases, props.dispositivo)
+  return c ?? 'gris'
+}
 </script>
 
 <template>
@@ -11,63 +18,48 @@ defineEmits<{ seleccionar: [id: string] }>()
     <div class="panel-cabecera">
       <div>
         <div class="eyebrow">ESTADO EN TIEMPO REAL</div>
-        <h2>{{ modo === 'simulacion' ? 'Fases por intersección' : 'Semáforos del dispositivo' }}</h2>
+        <h2>{{ modo === 'simulacion' ? '9 Semáforos viales' : 'Semáforos del dispositivo' }}</h2>
       </div>
-      <span class="etiqueta-fuente"
-        ><TrafficCone :size="15" />
+      <span class="etiqueta-fuente">
+        <TrafficCone :size="15" />
         {{
           modo === 'simulacion' ? 'SIMULACIÓN' : dispositivo.fuente === 'simulado' ? 'SIMULADOR SERIAL' : 'ARDUINO'
-        }}</span
-      >
+        }}
+      </span>
     </div>
+
     <p class="texto-secundario">
       {{
         modo === 'simulacion'
-          ? 'S1, S3 y S5 regulan las verticales; S2, S4 y S6 las horizontales. Las seis luces miran hacia los vehículos que se acercan. H y V muestran las fases simuladas.'
+          ? '9 semáforos activos orientados hacia el tráfico. Las 3 vías horizontales (S2, S4, S6) tienen su contraparte vertical en rojo/verde (S7, S8, S9).'
           : dispositivo.fuente === 'simulado'
-            ? 'Datos de prueba de un dispositivo simulado, sin Arduino físico.'
-            : 'Colores recibidos del Arduino en orden S1–S6. La orientación visual de la maqueta sigue el croquis.'
+            ? 'Datos del dispositivo simulado. S1–S6 físicos y S7–S9 como contrapartes seguras de las avenidas.'
+            : 'Colores confirmados por el Arduino UNO. S7–S9 calculan la contraparte segura del cruce.'
       }}
     </p>
-    <div class="semaforos-grid" v-if="modo === 'simulacion'">
+
+    <div class="semaforos-grid">
       <button
-        v-for="(fase, indice) in fases"
-        :key="fase.id"
+        v-for="(semaforo, indice) in SEMAFOROS_BASE"
+        :key="semaforo.id"
         type="button"
         class="semaforo-item"
-        :aria-label="`Seleccionar semáforo S${indice + 1}, cruce ${fase.id}`"
-        @click="$emit('seleccionar', `S${indice + 1}`)"
+        :aria-label="`Seleccionar semáforo ${semaforo.id}, cruce ${semaforo.cruce}`"
+        @click="$emit('seleccionar', semaforo.id)"
       >
         <div>
-          <span class="semaforo-icono">S{{ indice + 1 }}</span
-          ><strong>{{ fase.id }}</strong>
+          <span class="semaforo-icono">{{ semaforo.id }}</span>
+          <strong>{{ semaforo.cruce }} · {{ semaforo.eje === 'horizontal' ? 'H' : 'V' }}</strong>
         </div>
         <div class="fases-mini">
-          <span><i :class="['mini-punto', fase.horizontal]"></i> H</span
-          ><span><i :class="['mini-punto', fase.vertical]"></i> V</span>
+          <span>
+            <i :class="['mini-punto', colorDe(indice)]"></i>
+            {{ colorDe(indice).toUpperCase() }}
+          </span>
         </div>
-        <small>{{ Math.ceil(fase.restante) }} s</small>
-      </button>
-    </div>
-    <div class="semaforos-grid" v-else>
-      <button
-        v-for="n in 6"
-        :key="n"
-        type="button"
-        class="semaforo-item"
-        :aria-label="`Seleccionar semáforo S${n}, cruce I${n}`"
-        @click="$emit('seleccionar', `S${n}`)"
-      >
-        <div>
-          <span class="semaforo-icono">S{{ n }}</span
-          ><strong>S{{ n }}</strong>
-        </div>
-        <div class="fases-mini">
-          <span
-            ><i :class="['mini-punto', dispositivo.conectado ? dispositivo.colores[n - 1] : 'gris']"></i>
-            {{ dispositivo.conectado ? dispositivo.colores[n - 1] : 'Sin dato' }}</span
-          >
-        </div>
+        <small v-if="modo === 'simulacion'">
+          {{ Math.ceil(fases.find((f) => f.id === semaforo.cruce)?.restante ?? 0) }} s
+        </small>
       </button>
     </div>
   </section>
