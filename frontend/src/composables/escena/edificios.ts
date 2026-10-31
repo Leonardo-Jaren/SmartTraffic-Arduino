@@ -13,107 +13,198 @@ export interface EdificioUrbano {
   acento: number
   cubierta: 'acanalada' | 'tejas' | 'terraza' | 'pergola'
   escalonado?: boolean
-  franjaAzul?: boolean
+  pisos?: number
 }
 
-/** Techo de chapa acanalada plateada con nervaduras horizontales reflectantes */
-function crearCubiertaAcanalada(grupo: THREE.Group, ancho: number, fondo: number, y: number) {
-  const matChapa = new THREE.MeshStandardMaterial({
-    color: 0xdfe6ec,
-    metalness: 0.92,
-    roughness: 0.22,
+/** Crea un muro cortina acristalado de alta fidelidad con perfiles y reflejos */
+function crearFachadaAcristalada(
+  grupo: THREE.Group,
+  ancho: number,
+  alto: number,
+  fondo: number,
+  caraZ: number,
+  acento: number,
+) {
+  const matCristal = new THREE.MeshPhysicalMaterial({
+    color: 0x1a2b38,
+    metalness: 0.55,
+    roughness: 0.08,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.04,
+    reflectivity: 0.9,
   })
+  const matLobbyGlow = new THREE.MeshStandardMaterial({
+    color: 0xffeed8,
+    emissive: 0xffd4a3,
+    emissiveIntensity: 0.22,
+    roughness: 0.3,
+  })
+  const matMarco = materialUrbano(0x242c33, 0.4)
+  const matAcento = materialUrbano(acento, 0.35)
 
-  // Placa base de la cubierta metálica
-  const baseTecho = piezaUrbana(grupo, [ancho + 0.12, 0.05, fondo + 0.12], matChapa, [0, y + 0.025, 0], 0.02)
-  baseTecho.userData.proyectaSombra = true
+  // Planta baja acristalada con iluminación interior de lobby
+  piezaUrbana(grupo, [ancho * 0.88, 0.44, 0.03], matLobbyGlow, [0, 0.45, caraZ + 0.015])
+  piezaUrbana(grupo, [ancho * 0.86, 0.42, 0.02], matCristal, [0, 0.45, caraZ + 0.025])
 
-  // Nervaduras / acanaladuras paralelas idénticas a la chapa de la maqueta
-  const paso = 0.12
-  const cantidad = Math.floor((fondo + 0.06) / paso)
-  const radioNervio = 0.018
-  const nervioGeom = new THREE.CylinderGeometry(radioNervio, radioNervio, ancho + 0.08, 8)
-  nervioGeom.rotateZ(Math.PI / 2)
-  const offset = -(cantidad * paso) / 2 + paso / 2
+  // Puerta automática de cristal con marco de acero
+  piezaUrbana(grupo, [0.38, 0.34, 0.04], matMarco, [0, 0.4, caraZ + 0.035], 0.01)
 
-  for (let i = 0; i < cantidad; i++) {
-    const costilla = new THREE.Mesh(nervioGeom, matChapa)
-    costilla.position.set(0, y + 0.054, offset + i * paso)
-    costilla.castShadow = true
-    costilla.userData.proyectaSombra = true
-    grupo.add(costilla)
+  // Marquesina voladiza sobre la entrada
+  piezaUrbana(grupo, [0.72, 0.03, 0.28], matMarco, [0, 0.65, caraZ + 0.15], 0.01)
+
+  // Pisos superiores: muro cortina con montantes verticales y lamas de diseño
+  const yInicio = 0.8
+  const altoPisos = alto - 0.6
+  piezaUrbana(grupo, [ancho * 0.88, altoPisos, 0.025], matCristal, [0, yInicio + altoPisos / 2, caraZ + 0.015])
+
+  // Forjados horizontales que separan plantas
+  const cantidadPisos = Math.max(2, Math.floor(alto / 0.55))
+  const pasoPiso = altoPisos / cantidadPisos
+  for (let p = 1; p <= cantidadPisos; p++) {
+    const yPiso = yInicio + p * pasoPiso
+    piezaUrbana(grupo, [ancho * 0.92, 0.045, 0.06], matMarco, [0, yPiso, caraZ + 0.03])
   }
 
-  // Remate perimetral de aluminio
-  const matBorde = materialUrbano(0xc5d0d8, 0.3)
-  const remateX = piezaUrbana(grupo, [ancho + 0.14, 0.045, 0.03], matBorde, [0, y + 0.035, (fondo + 0.12) / 2])
-  const remateZ = piezaUrbana(grupo, [ancho + 0.14, 0.045, 0.03], matBorde, [0, y + 0.035, -(fondo + 0.12) / 2])
-  remateX.userData.proyectaSombra = true
-  remateZ.userData.proyectaSombra = true
+  // Lamas arquitectónicas verticales parasol (brise-soleil) en el color del edificio
+  const cantidadLamas = Math.floor(ancho / 0.45)
+  const pasoLamas = (ancho * 0.8) / cantidadLamas
+  for (let i = -cantidadLamas / 2; i <= cantidadLamas / 2; i++) {
+    const xLama = i * pasoLamas
+    piezaUrbana(grupo, [0.035, altoPisos, 0.1], matAcento, [xLama, yInicio + altoPisos / 2, caraZ + 0.05], 0.01)
+  }
 }
 
-/** Franja arquitectónica de ventanal / rejilla azul marino característica de la maqueta */
-function crearFranjaVentanal(grupo: THREE.Group, ancho: number, alto: number, fondo: number) {
-  const matAzul = new THREE.MeshStandardMaterial({
-    color: 0x1976d2,
-    emissive: 0x0d47a1,
-    emissiveIntensity: 0.25,
-    roughness: 0.35,
+/** Cubierta técnica moderna con peto perimetral, paneles solares y climatizadores HVAC */
+function crearCubiertaArquitectonica(
+  grupo: THREE.Group,
+  ancho: number,
+  fondo: number,
+  y: number,
+  acento: number,
+) {
+  const matPeto = materialUrbano(0xd5dde5, 0.5)
+  const matSuelo = materialUrbano(0x283038, 0.85)
+  const matMetal = new THREE.MeshStandardMaterial({ color: 0x98a4af, metalness: 0.85, roughness: 0.25 })
+  const matSolar = new THREE.MeshStandardMaterial({
+    color: 0x102438,
+    emissive: 0x061424,
+    emissiveIntensity: 0.3,
+    metalness: 0.88,
+    roughness: 0.18,
   })
-  const matMarco = materialUrbano(0xd0d8e0, 0.4)
-  const matLama = materialUrbano(0xffffff, 0.3)
 
-  // Marco exterior
-  const marco = piezaUrbana(grupo, [0.32, 0.85, 0.045], matMarco, [ancho * 0.28, 0.25 + alto * 0.45, fondo / 2 + 0.015], 0.01)
-  marco.userData.proyectaSombra = true
+  // Suelo técnico de grava/membrana
+  piezaUrbana(grupo, [ancho - 0.08, 0.04, fondo - 0.08], matSuelo, [0, y, 0])
 
-  // Cristal / panel azul de fondo
-  const panel = piezaUrbana(grupo, [0.26, 0.79, 0.02], matAzul, [ancho * 0.28, 0.25 + alto * 0.45, fondo / 2 + 0.028])
+  // Peto perimetral arquitectónico con remate de aluminio
+  for (const [w, f, px, pz] of [
+    [ancho, 0.06, 0, fondo / 2],
+    [ancho, 0.06, 0, -fondo / 2],
+    [0.06, fondo, ancho / 2, 0],
+    [0.06, fondo, -ancho / 2, 0],
+  ] as const) {
+    piezaUrbana(grupo, [w, 0.16, f], matPeto, [px, y + 0.08, pz], 0.01)
+  }
+
+  // Caseta de ascensores / acceso a cubierta
+  const altCaseta = 0.38
+  piezaUrbana(grupo, [ancho * 0.34, altCaseta, fondo * 0.32], matPeto, [-ancho * 0.22, y + altCaseta / 2, -fondo * 0.18])
+  // Rejilla de ventilación de la caseta
+  piezaUrbana(grupo, [ancho * 0.28, altCaseta * 0.6, 0.02], matMetal, [-ancho * 0.22, y + altCaseta / 2, -fondo * 0.18 + fondo * 0.16 + 0.01])
+
+  // Mástil de telecomunicaciones / pararrayos
+  const antena = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.02, 0.55, 8), matMetal)
+  antena.position.set(-ancho * 0.22, y + altCaseta + 0.275, -fondo * 0.18)
+  grupo.add(antena)
+
+  // Bancada de climatización HVAC con ventiladores
+  const hvac = piezaUrbana(grupo, [ancho * 0.38, 0.18, fondo * 0.24], matMetal, [ancho * 0.2, y + 0.09, -fondo * 0.2])
+  hvac.userData.proyectaSombra = true
+  for (const dx of [-0.15, 0.15]) {
+    const ventilador = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.02, 16), matSuelo)
+    ventilador.position.set(ancho * 0.2 + dx, y + 0.19, -fondo * 0.2)
+    grupo.add(ventilador)
+  }
+
+  // Matriz de paneles solares fotovoltaicos inclinados
+  const solarWidth = ancho * 0.55
+  const solarDepth = fondo * 0.32
+  const panel = piezaUrbana(grupo, [solarWidth, 0.025, solarDepth], matSolar, [ancho * 0.08, y + 0.12, fondo * 0.18], 0.01)
+  panel.rotation.x = -0.22
   panel.userData.proyectaSombra = true
 
-  // Lamas / celosías horizontales blancas
-  for (let y = -0.3; y <= 0.3; y += 0.15) {
-    piezaUrbana(grupo, [0.24, 0.02, 0.025], matLama, [ancho * 0.28, 0.25 + alto * 0.45 + y, fondo / 2 + 0.038])
+  // Estructura de soporte de los paneles solares
+  for (const sx of [-solarWidth * 0.4, 0, solarWidth * 0.4]) {
+    const pata = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.14, 6), matMetal)
+    pata.position.set(ancho * 0.08 + sx, y + 0.07, fondo * 0.18 - solarDepth * 0.35)
+    grupo.add(pata)
   }
 }
 
-/** Construye un edificio de volumen arquitectónico limpio fiel a la maqueta física */
+/** Construye un edificio de arquitectura contemporánea realista */
 export function crearEdificio(datos: EdificioUrbano) {
   const grupo = new THREE.Group()
 
-  const matPared = materialUrbano(datos.pared, 0.45)
-  const matPlinto = materialUrbano(0xdbe3ea, 0.55)
+  const matPared = materialUrbano(datos.pared, 0.52)
+  const matPlinto = materialUrbano(0xc2ccd6, 0.6)
+  const matAcento = materialUrbano(datos.acento, 0.38)
 
-  // 1. Zócalo / plinto perimetral inferior
+  // 1. Zócalo / podio de granito urbano
   const plinto = piezaUrbana(
     grupo,
-    [datos.ancho + 0.16, 0.06, datos.fondo + 0.16],
+    [datos.ancho + 0.18, 0.08, datos.fondo + 0.18],
     matPlinto,
-    [0, 0.22, 0],
+    [0, 0.24, 0],
     0.02,
   )
   plinto.userData.proyectaSombra = true
   plinto.userData.recibeSombra = true
 
-  // 2. Volumen principal del edificio con su color perimetral
+  // 2. Núcleo volumétrico estructural del edificio
   const cuerpo = piezaUrbana(
     grupo,
     [datos.ancho, datos.alto, datos.fondo],
     matPared,
-    [0, 0.25 + datos.alto / 2, 0],
-    0.03,
+    [0, 0.26 + datos.alto / 2, 0],
+    0.025,
   )
   cuerpo.userData.proyectaSombra = true
   cuerpo.userData.recibeSombra = true
 
-  // 3. Ventanal arquitectónico azul característico observado en la maqueta
-  if (datos.franjaAzul !== false) {
-    crearFranjaVentanal(grupo, datos.ancho, datos.alto, datos.fondo)
+  // 3. Fachada principal acristalada con brise-soleil (hacia la calle)
+  crearFachadaAcristalada(grupo, datos.ancho, datos.alto, datos.fondo, datos.fondo / 2, datos.acento)
+
+  // Fachada posterior con ventanales apaisados
+  const matCristalSec = new THREE.MeshPhysicalMaterial({
+    color: 0x182430,
+    metalness: 0.6,
+    roughness: 0.1,
+    clearcoat: 0.8,
+  })
+  const pisos = Math.max(2, Math.floor(datos.alto / 0.55))
+  for (let p = 0; p < pisos; p++) {
+    const yVentana = 0.55 + p * (datos.alto / pisos)
+    piezaUrbana(grupo, [datos.ancho * 0.78, 0.22, 0.025], matCristalSec, [0, yVentana, -datos.fondo / 2 - 0.01])
+    piezaUrbana(grupo, [datos.ancho * 0.8, 0.035, 0.045], matAcento, [0, yVentana + 0.12, -datos.fondo / 2 - 0.02])
   }
 
-  // 4. Cubierta de chapa acanalada plateada
-  const yTecho = 0.25 + datos.alto
-  crearCubiertaAcanalada(grupo, datos.ancho, datos.fondo, yTecho)
+  // Fachadas laterales con franjas verticales arquitectónicas
+  for (const lado of [-1, 1]) {
+    piezaUrbana(grupo, [0.03, datos.alto * 0.85, datos.fondo * 0.55], matCristalSec, [
+      lado * (datos.ancho / 2 + 0.01),
+      0.26 + datos.alto * 0.5,
+      0,
+    ])
+    piezaUrbana(grupo, [0.045, datos.alto * 0.88, 0.06], matAcento, [
+      lado * (datos.ancho / 2 + 0.02),
+      0.26 + datos.alto * 0.5,
+      datos.fondo * 0.3,
+    ])
+  }
+
+  // 4. Cubierta técnica con climatizadores, paneles solares y caseta
+  const yTecho = 0.26 + datos.alto
+  crearCubiertaArquitectonica(grupo, datos.ancho, datos.fondo, yTecho, datos.acento)
 
   agruparPiezasUrbanas(grupo)
   grupo.position.set(datos.x, 0, datos.z)

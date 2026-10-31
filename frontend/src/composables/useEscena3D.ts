@@ -41,7 +41,7 @@ export function useEscena3D(
     if (!elemento) return
     try {
       const escena = new THREE.Scene()
-      escena.background = new THREE.Color(0xe8efe9)
+      escena.background = new THREE.Color(0x181e24)
       const grupoMaqueta = new THREE.Group()
       escena.add(grupoMaqueta)
       const camara = new THREE.PerspectiveCamera(38, 1, 0.02, 30)
@@ -52,19 +52,25 @@ export function useEscena3D(
       renderizador.shadowMap.enabled = true
       renderizador.shadowMap.type = THREE.PCFSoftShadowMap
       renderizador.toneMapping = THREE.ACESFilmicToneMapping
-      renderizador.toneMappingExposure = 1.18
+      renderizador.toneMappingExposure = 1.22
       elemento.appendChild(renderizador.domElement)
-      escena.add(new THREE.HemisphereLight(0xe4f0ff, 0x6f8d79, 1.8))
-      const sol = new THREE.DirectionalLight(0xffeed2, 3)
-      sol.position.set(-0.61, 1.37, 0.91)
+
+      // Iluminación arquitectónica de 3 puntos (Sol principal + Relleno celeste + Luz ambiental hemisférica)
+      escena.add(new THREE.HemisphereLight(0xeaf4ff, 0x223026, 1.5))
+      const sol = new THREE.DirectionalLight(0xfff6e8, 2.9)
+      sol.position.set(-0.65, 1.45, 0.88)
       sol.castShadow = true
-      const resolucionSombra = window.innerWidth < 700 ? 512 : 1024
+      const resolucionSombra = window.innerWidth < 700 ? 1024 : 2048
       sol.shadow.mapSize.set(resolucionSombra, resolucionSombra)
-      Object.assign(sol.shadow.camera, { left: -1.35, right: 1.35, top: 1.3, bottom: -1.3, near: 0.1, far: 4.5 })
+      Object.assign(sol.shadow.camera, { left: -1.4, right: 1.4, top: 1.35, bottom: -1.35, near: 0.1, far: 4.8 })
       sol.shadow.camera.updateProjectionMatrix()
-      sol.shadow.bias = -0.001
-      sol.shadow.normalBias = 0.005
+      sol.shadow.bias = -0.0004
+      sol.shadow.normalBias = 0.012
       escena.add(sol)
+
+      const luzRelleno = new THREE.DirectionalLight(0x8eb9e4, 0.95)
+      luzRelleno.position.set(0.9, 1.05, -0.85)
+      escena.add(luzRelleno)
       const controles = new OrbitControls(camara, renderizador.domElement)
       controles.target.set(0, 0, 0)
       controles.enableDamping = true
