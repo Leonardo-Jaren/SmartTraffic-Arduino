@@ -1,5 +1,7 @@
-import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue'
 import * as THREE from 'three'
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
+import { aplicarCalidad, PERFILES_CALIDAD, type CalidadEscena } from './escena/calidad'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import type {
   EstadoDispositivo,
@@ -33,6 +35,10 @@ export function useEscena3D(
   seleccionar: (valor: Seleccion) => void,
 ) {
   const error = ref('')
+  const calidad = ref<CalidadEscena>('equilibrada')
+  let cambiarVista: (superior: boolean) => void = () => {}
+  const vistaGeneral = () => cambiarVista(false)
+  const vistaSuperior = () => cambiarVista(true)
   let animacion = 0
   let limpiar: (() => void) | undefined
 
@@ -41,18 +47,25 @@ export function useEscena3D(
     if (!elemento) return
     try {
       const escena = new THREE.Scene()
-      escena.background = new THREE.Color(0x181e24)
+      escena.background = new THREE.Color(0xe5ecf1)
       const grupoMaqueta = new THREE.Group()
       escena.add(grupoMaqueta)
       const camara = new THREE.PerspectiveCamera(38, 1, 0.02, 30)
-      camara.position.set(13 * ESCALA_MAQUETA.x, 17 * ESCALA_MAQUETA.y, 19.5 * ESCALA_MAQUETA.z)
+      camara.position.set(13 * ESCALA_MAQUETA.x, 26 * ESCALA_MAQUETA.y, 19.5 * ESCALA_MAQUETA.z)
       const renderizador = new THREE.WebGLRenderer({ antialias: true })
       renderizador.setPixelRatio(Math.min(window.devicePixelRatio, 2))
       renderizador.outputColorSpace = THREE.SRGBColorSpace
       renderizador.shadowMap.enabled = true
-      renderizador.shadowMap.type = THREE.PCFSoftShadowMap
+      renderizador.shadowMap.type = THREE.PCFShadowMap
       renderizador.toneMapping = THREE.ACESFilmicToneMapping
-      renderizador.toneMappingExposure = 1.22
+      renderizador.toneMappingExposure = 1.05
+      const generadorEntorno = new THREE.PMREMGenerator(renderizador)
+      const sala = new RoomEnvironment()
+      const entorno = generadorEntorno.fromScene(sala, 0.04)
+      escena.environment = entorno.texture
+      escena.environmentIntensity = 0.45
+      sala.dispose()
+      generadorEntorno.dispose()
       elemento.appendChild(renderizador.domElement)
 
       // Iluminación arquitectónica de 3 puntos (Sol principal + Relleno celeste + Luz ambiental hemisférica)
@@ -65,7 +78,9 @@ export function useEscena3D(
       Object.assign(sol.shadow.camera, { left: -1.4, right: 1.4, top: 1.35, bottom: -1.35, near: 0.1, far: 4.8 })
       sol.shadow.camera.updateProjectionMatrix()
       sol.shadow.bias = -0.0004
-      sol.shadow.normalBias = 0.012
+      sol.shadow.normalBias = 0.002
+      renderizador.shadowMap.autoUpdate = false
+      aplicarCalidad(renderizador, sol, calidad.value)
       escena.add(sol)
 
       const luzRelleno = new THREE.DirectionalLight(0x8eb9e4, 0.95)
@@ -81,7 +96,7 @@ export function useEscena3D(
       const maqueta = crearMaqueta(grupoMaqueta)
       grupoMaqueta.traverse((objeto) => {
         if (objeto instanceof THREE.Mesh) {
-          objeto.castShadow = objeto.userData.proyectaSombra === true
+          objeto.castShadow = objeto.castShadow || objeto.userData.proyectaSombra === true
           objeto.receiveShadow = objeto.userData.recibeSombra === true
         }
       })
@@ -147,7 +162,35 @@ export function useEscena3D(
       const observador = new ResizeObserver(ajustar)
       observador.observe(elemento)
       ajustar()
-      const dibujar = () => {
+      cambiarVista = (superior) => {
+        vistaAjustadaPorUsuario = false
+        const direccion = superior
+          ? new THREE.Vector3(0, 1, 0.001).normalize()
+          : new THREE.Vector3(1, 1.65, 1.65).normalize()
+        camara.position.copy(controles.target).addScaledVector(direccion, 3)
+        ajustar()
+      }
+      const dejarCalidad = watch(calidad, (valor) => {
+        aplicarCalidad(renderizador, sol, valor)
+        ajustar()
+      })
+      let visible = true
+      let ultimoCuadro = 0
+      let ultimaSombra = -Infinity
+      const visibilidad = new IntersectionObserver(([entrada]) => {
+        visible = entrada?.isIntersecting ?? false
+      })
+      visibilidad.observe(elemento)
+      const dibujar = (ahora: number) => {
+        animacion = requestAnimationFrame(dibujar)
+        if (document.hidden || !visible) {
+          ultimoCuadro = 0
+          return
+        }
+        const intervalo = 1000 / PERFILES_CALIDAD[calidad.value].fps
+        if (ahora - ultimoCuadro < intervalo - 0.5) return
+        const delta = ultimoCuadro ? Math.min((ahora - ultimoCuadro) / 1000, 0.1) : 1 / 60
+        ultimoCuadro = ahora
         const estado = obtenerEstado()
         dinamicos.actualizar(
           estado.vehiculos,
@@ -161,7 +204,7 @@ export function useEscena3D(
           estado.ubicaciones,
           estado.desactivados,
         )
-        controles.update()
+        controles.update(delta)
         // Al girar la vista inicial, mantiene todos los bordes dentro del cuadro.
         // Un zoom o desplazamiento manual conserva después la distancia elegida.
         if (!vistaAjustadaPorUsuario) {
@@ -179,12 +222,19 @@ export function useEscena3D(
             direccionEncuadrada.copy(direccion)
           }
         }
+        if (ahora - ultimaSombra >= 1000 / 30) {
+          renderizador.shadowMap.needsUpdate = true
+          ultimaSombra = ahora
+        }
         renderizador.render(escena, camara)
-        animacion = requestAnimationFrame(dibujar)
       }
-      dibujar()
+      animacion = requestAnimationFrame(dibujar)
       limpiar = () => {
+        dejarCalidad()
+        visibilidad.disconnect()
         observador.disconnect()
+        entorno.dispose()
+        sol.shadow.dispose()
         controles.dispose()
         renderizador.domElement.removeEventListener('pointerdown', iniciarPuntero)
         renderizador.domElement.removeEventListener('pointerup', terminarPuntero)
@@ -217,5 +267,5 @@ export function useEscena3D(
     cancelAnimationFrame(animacion)
     limpiar?.()
   })
-  return { error }
+  return { error, calidad, vistaGeneral, vistaSuperior }
 }

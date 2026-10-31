@@ -1,10 +1,12 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
 async function seleccionarEnMapa(page: Page, canvas: Locator, boton: string) {
+  await page.getByRole('button', { name: 'Desde arriba', exact: true }).click()
+  await page.waitForTimeout(150)
   const caja = await canvas.boundingBox()
   if (!caja) throw new Error('La maqueta no tiene tamaño visible')
-  for (const y of [0.32, 0.4, 0.48, 0.56, 0.64, 0.72, 0.8]) {
-    for (const x of [0.25, 0.32, 0.39, 0.46, 0.53, 0.6, 0.67, 0.74]) {
+  for (let y = 0.2; y <= 0.8; y += 0.01) {
+    for (const x of [0.5]) {
       await canvas.click({ position: { x: caja.width * x, y: caja.height * y }, force: true })
       if (await page.getByRole('button', { name: boton }).isVisible()) return
     }
@@ -51,10 +53,10 @@ test('maqueta interactiva, controles y desconexión', async ({ page }) => {
 
   await page.locator('.campos-tiempo label').first().locator('input').fill('5')
   await page.getByRole('button', { name: 'Aplicar a simulación' }).click()
-  await expect(page.getByText('Principal: entre 15 y 120 s.')).toBeVisible()
+  await expect(page.getByText('Principal: entre 6 y 120 s.')).toBeVisible()
   await page.getByRole('button', { name: 'Dispositivo', exact: true }).click()
   await expect(page.getByText('Arduino sin conexión.')).toBeVisible()
-  await expect(page.locator('.semaforo-item').filter({ hasText: 'Sin dato' })).toHaveCount(6)
+  await expect(page.locator('.semaforo-item .mini-punto.gris')).toHaveCount(9)
   expect(errores).toEqual([])
 })
 
@@ -87,8 +89,8 @@ test('identifica el simulador serial y oculta su estado al desconectarse', async
   await expect(page.getByText('Simulador serial conectado')).toBeVisible()
   await page.getByRole('button', { name: 'Dispositivo', exact: true }).click()
   await expect(page.getByText('SIMULADOR SERIAL', { exact: true })).toBeVisible()
-  await expect(page.getByText('Datos de prueba de un dispositivo simulado', { exact: false })).toBeVisible()
+  await expect(page.getByText('Datos del dispositivo simulado', { exact: false })).toBeVisible()
   conectado = false
   await expect(page.getByText('Arduino sin conexión.')).toBeVisible({ timeout: 5000 })
-  await expect(page.locator('.semaforo-item').filter({ hasText: 'Sin dato' })).toHaveCount(6)
+  await expect(page.locator('.semaforo-item .mini-punto.gris')).toHaveCount(9)
 })

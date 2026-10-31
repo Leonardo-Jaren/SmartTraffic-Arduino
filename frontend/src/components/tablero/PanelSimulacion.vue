@@ -33,9 +33,12 @@ const maximo = defineModel<number>('maximo', { required: true })
         ><span><CarFront :size="17" /> Vehículos</span
         ><input v-model="mostrar" type="checkbox" :disabled="deshabilitado" /><i></i
       ></label>
+      <p class="nota-panel">
+        H1 y H2 tienen prioridad. Las verticales circulan al 60 % de la velocidad de las avenidas.
+      </p>
       <div class="control-rango">
         <div class="control-label">
-          <span>Velocidad</span><strong>{{ velocidad }} <small>km/h</small></strong>
+          <span>Velocidad en avenidas</span><strong>{{ velocidad }} <small>km/h</small></strong>
         </div>
         <input
           v-model.number="velocidad"
@@ -58,12 +61,12 @@ const maximo = defineModel<number>('maximo', { required: true })
           v-model.number="cantidad"
           type="range"
           min="0"
-          max="24"
+          max="48"
           step="1"
           :disabled="deshabilitado || !mostrar"
           aria-label="Cantidad de vehículos"
         />
-        <div class="extremos"><span>0</span><span>24</span></div>
+        <div class="extremos"><span>0</span><span>48</span></div>
       </div>
       <div class="sim-pie">
         <span>{{ mostrar ? actuales : 0 }} activos · {{ mostrar ? detenidos : 0 }} detenidos</span

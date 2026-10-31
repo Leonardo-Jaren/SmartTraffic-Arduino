@@ -1,22 +1,22 @@
 import type { Eje, Nodo, Tramo } from '@/types/trafico'
 
 export const NODOS: Record<string, Nodo> = {
-  I1: { id: 'I1', x: -6, z: -4, tipo: 'cruce' },
-  I2: { id: 'I2', x: 0, z: -4, tipo: 'cruce' },
-  I3: { id: 'I3', x: 6, z: -4, tipo: 'cruce' },
-  I4: { id: 'I4', x: -6, z: 4, tipo: 'cruce' },
-  I5: { id: 'I5', x: 0, z: 4, tipo: 'cruce' },
-  I6: { id: 'I6', x: 6, z: 4, tipo: 'cruce' },
-  H1E: { id: 'H1E', x: 10, z: -4, tipo: 'entrada' },
-  H1O: { id: 'H1O', x: -10, z: -4, tipo: 'salida' },
-  H2O: { id: 'H2O', x: -10, z: 4, tipo: 'entrada' },
-  H2E: { id: 'H2E', x: 10, z: 4, tipo: 'salida' },
-  V1S: { id: 'V1S', x: -6, z: 8, tipo: 'entrada' },
-  V1N: { id: 'V1N', x: -6, z: -8, tipo: 'salida' },
-  V2N: { id: 'V2N', x: 0, z: -8, tipo: 'entrada' },
-  V2S: { id: 'V2S', x: 0, z: 8, tipo: 'salida' },
-  V3S: { id: 'V3S', x: 6, z: 8, tipo: 'entrada' },
-  V3N: { id: 'V3N', x: 6, z: -8, tipo: 'salida' },
+  I1: { id: 'I1', x: -14, z: -9, tipo: 'cruce' },
+  I2: { id: 'I2', x: 0, z: -9, tipo: 'cruce' },
+  I3: { id: 'I3', x: 14, z: -9, tipo: 'cruce' },
+  I4: { id: 'I4', x: -14, z: 9, tipo: 'cruce' },
+  I5: { id: 'I5', x: 0, z: 9, tipo: 'cruce' },
+  I6: { id: 'I6', x: 14, z: 9, tipo: 'cruce' },
+  H1E: { id: 'H1E', x: 21, z: -9, tipo: 'entrada' },
+  H1O: { id: 'H1O', x: -21, z: -9, tipo: 'salida' },
+  H2O: { id: 'H2O', x: -21, z: 9, tipo: 'entrada' },
+  H2E: { id: 'H2E', x: 21, z: 9, tipo: 'salida' },
+  V1S: { id: 'V1S', x: -14, z: 17, tipo: 'entrada' },
+  V1N: { id: 'V1N', x: -14, z: -17, tipo: 'salida' },
+  V2N: { id: 'V2N', x: 0, z: -17, tipo: 'entrada' },
+  V2S: { id: 'V2S', x: 0, z: 17, tipo: 'salida' },
+  V3S: { id: 'V3S', x: 14, z: 17, tipo: 'entrada' },
+  V3N: { id: 'V3N', x: 14, z: -17, tipo: 'salida' },
 }
 
 function crearTramos(calle: string, eje: Eje, secuencia: string[]): Tramo[] {
@@ -47,9 +47,13 @@ export const TRAMOS: Tramo[] = [
 export const CRUCES = ['I1', 'I2', 'I3', 'I4', 'I5', 'I6']
 export const ENTRADAS = Object.values(NODOS).filter((n) => n.tipo === 'entrada')
 export const SALIDAS = Object.values(NODOS).filter((n) => n.tipo === 'salida')
-export const METROS_POR_UNIDAD = 5
-export const VELOCIDAD_OLA = 30
-export const SEPARACION_SEGURA_VEHICULOS = 2.4
+export const METROS_POR_UNIDAD = 4
+export const ANCHO_CARRIL = 0.9
+export const ANCHO_VIA = ANCHO_CARRIL * 2
+export const ANCHO_TABLERO = 45
+export const FONDO_TABLERO = 37
+export const VELOCIDAD_OLA = 45
+export const SEPARACION_SEGURA_VEHICULOS = 1.8
 export const DISTANCIA_LINEA_CRUCE = 1.85
 // El vehículo se detiene con el frente sobre la línea, no con el centro del auto.
 export const DISTANCIA_PARADA_CRUCE = DISTANCIA_LINEA_CRUCE + 0.85

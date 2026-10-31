@@ -1,7 +1,7 @@
 import type { FaseCruce, Vehiculo } from '@/types/trafico'
 import {
+  ANCHO_CARRIL,
   DISTANCIA_LIBRE_CRUCE,
-  DISTANCIA_LINEA_CRUCE,
   DISTANCIA_PARADA_CRUCE,
   ENTRADAS,
   METROS_POR_UNIDAD,
@@ -12,6 +12,7 @@ import {
   TRAMOS,
   obtenerTramo,
 } from './mapa'
+import { movimientosCompatibles } from './movimientos'
 import { calcularRuta } from './rutas'
 
 const COLORES = [0xf6b945, 0x53aee4, 0xf07368, 0xf0eee5, 0x85c7a4, 0x9b5de5, 0x00bbf9, 0xf15bb5]
@@ -51,9 +52,10 @@ export function obtenerCoordenadasVehiculo(
   const ratio = Math.max(0, Math.min(1, vehiculo.progreso / tramo.longitud))
   const dx = (b.x - a.x) / tramo.longitud
   const dz = (b.z - a.z) / tramo.longitud
+  const lateral = ((vehiculo.carril ?? 0) - 0.5) * ANCHO_CARRIL
   return {
-    x: a.x + (b.x - a.x) * ratio,
-    z: a.z + (b.z - a.z) * ratio,
+    x: a.x + (b.x - a.x) * ratio - dz * lateral,
+    z: a.z + (b.z - a.z) * ratio + dx * lateral,
     dx,
     dz,
   }
@@ -90,21 +92,23 @@ export function crearVehiculo(id: number, actuales: Vehiculo[], cierres: Set<str
       const ruta = calcularRuta(entrada.id, salida.id, cierres)
       if (!ruta?.length) continue
 
-      // Verificar que ningún auto esté cerca del punto de ingreso (en la misma calle o en el espacio 3D)
+      // Dos colas independientes por entrada; se intenta el segundo carril si el primero está ocupado.
       const tramoEntrada = ruta[0]!
-      const nodoEntrada = NODOS[entrada.id]!
-      const ocupado = actuales.some((v) => {
-        if (v.ruta[v.indice] === tramoEntrada && v.progreso < SEPARACION_SEGURA_VEHICULOS + 0.5) return true
-        const coord = obtenerCoordenadasVehiculo(v)
-        if (coord && Math.hypot(coord.x - nodoEntrada.x, coord.z - nodoEntrada.z) < SEPARACION_SEGURA_VEHICULOS) {
-          return true
-        }
-        return false
-      })
-      if (ocupado) continue
+      const carriles: (0 | 1)[] = id % 2 ? [1, 0] : [0, 1]
+      const carril = carriles.find(
+        (candidato) =>
+          !actuales.some(
+            (v) =>
+              (v.carril ?? 0) === candidato &&
+              v.ruta[v.indice] === tramoEntrada &&
+              v.progreso < SEPARACION_SEGURA_VEHICULOS + 0.5,
+          ),
+      )
+      if (carril === undefined) continue
 
       return {
         id,
+        carril,
         ruta,
         indice: 0,
         progreso: 0,
@@ -128,10 +132,6 @@ function actualizarRuta(vehiculo: Vehiculo, hacia: string, cierres: Set<string>)
   return true
 }
 
-// Registro para prevención de bloqueos permanentes (anti-deadlock watchdog)
-const tiemposBloqueado = new Map<number, number>()
-const tiemposReserva = new Map<string, number>()
-
 export function avanzarVehiculos(
   vehiculos: Vehiculo[],
   segundos: number,
@@ -142,17 +142,9 @@ export function avanzarVehiculos(
 ): Vehiculo[] {
   const paso = Number.isFinite(segundos) ? Math.max(0, Math.min(segundos, 0.1)) : 0
   const rapidez = Number.isFinite(velocidad) ? Math.max(0, velocidad) : 0
-  const distancia = (paso * (rapidez / 3.6)) / METROS_POR_UNIDAD
 
-  // Limpieza de reservas huérfanas o prolongadas
-  for (const [cruceId, t] of tiemposReserva.entries()) {
-    if (t > 7) tiemposReserva.delete(cruceId)
-    else tiemposReserva.set(cruceId, t + paso)
-  }
+  // La reserva depende de la ocupación real y no puede caducar mientras el coche sigue dentro.
 
-  const reservas = new Map(
-    vehiculos.filter((v) => v.reservado && tiemposReserva.has(v.reservado)).map((v) => [v.reservado!, v.id]),
-  )
   const terminados = new Set<number>()
 
   // Ordenar para procesamiento predecible
@@ -162,7 +154,6 @@ export function avanzarVehiculos(
     let tramo = obtenerTramo(vehiculo.ruta[vehiculo.indice] || '')
     if (!tramo) {
       terminados.add(vehiculo.id)
-      tiemposBloqueado.delete(vehiculo.id)
       continue
     }
 
@@ -185,14 +176,11 @@ export function avanzarVehiculos(
       }
       if (cierres.has(tramo.id) && !comprometidoConCruce) {
         vehiculo.detenido = 'tramo cerrado'
-        const tBloq = (tiemposBloqueado.get(vehiculo.id) ?? 0) + paso
-        tiemposBloqueado.set(vehiculo.id, tBloq)
-        // Si no puede salir de una calle bloqueada tras 8s, se remueve para no congelar la simulación
-        if (tBloq > 8) terminados.add(vehiculo.id)
         continue
       }
     }
 
+    const distancia = (paso * ((rapidez * (tramo.eje === 'horizontal' ? 1 : 0.6)) / 3.6)) / METROS_POR_UNIDAD
     const destino = NODOS[tramo.hacia]!
     let limite = Number.POSITIVE_INFINITY
     let motivo = ''
@@ -201,12 +189,16 @@ export function avanzarVehiculos(
     // Control de aproximación a intersecciones y semáforos
     if (destino.tipo === 'cruce') {
       const lineaParada = tramo.longitud - DISTANCIA_PARADA_CRUCE
-      const lineaEntradaCruce = tramo.longitud - DISTANCIA_LINEA_CRUCE
       const yaEstaDentroDelCruce = vehiculo.reservado === destino.id && vehiculo.progreso >= lineaParada
 
       if (!yaEstaDentroDelCruce) {
         const fase = fases.find((f) => f.id === destino.id)
-        const cruceOcupado = reservas.has(destino.id) && reservas.get(destino.id) !== vehiculo.id
+        const cruceOcupado = vehiculos.some(
+          (otro) =>
+            otro.id !== vehiculo.id &&
+            otro.reservado === destino.id &&
+            !movimientosCompatibles(vehiculo, otro, destino.id),
+        )
         const rutaDisponible = actualizarRuta(vehiculo, destino.id, cierres)
         const siguiente = vehiculo.ruta[vehiculo.indice + 1]
 
@@ -214,6 +206,7 @@ export function avanzarVehiculos(
         const salidaLibre = !vehiculos.some(
           (otro) =>
             otro.id !== vehiculo.id &&
+            (otro.carril ?? 0) === (vehiculo.carril ?? 0) &&
             otro.ruta[otro.indice] === siguiente &&
             otro.progreso < DISTANCIA_LIBRE_CRUCE + SEPARACION_SEGURA_VEHICULOS,
         )
@@ -243,7 +236,7 @@ export function avanzarVehiculos(
     // Prevención de colisiones por proximidad en la misma calle
     const posicion = posicionEnCalle(vehiculo)
     for (const otro of vehiculos) {
-      if (otro.id === vehiculo.id) continue
+      if (otro.id === vehiculo.id || (otro.carril ?? 0) !== (vehiculo.carril ?? 0)) continue
       const otroTramo = obtenerTramo(otro.ruta[otro.indice] || '')
       const posicionOtro = posicionEnCalle(otro)
       if (!otroTramo || otroTramo.calle !== tramo.calle || posicion === null || posicionOtro === null) continue
@@ -256,30 +249,8 @@ export function avanzarVehiculos(
       }
     }
 
-    // Prevención espacial 3D contra solapamientos entre vehículos de distintas calles o giros
-    const miCoord = obtenerCoordenadasVehiculo(vehiculo)
-    if (miCoord) {
-      for (const otro of vehiculos) {
-        if (otro.id === vehiculo.id) continue
-        const otraCoord = obtenerCoordenadasVehiculo(otro)
-        if (!otraCoord) continue
-
-        const vx = otraCoord.x - miCoord.x
-        const vz = otraCoord.z - miCoord.z
-        const proyeccion = vx * miCoord.dx + vz * miCoord.dz
-        const lateral = Math.abs(vx * -miCoord.dz + vz * miCoord.dx)
-
-        // Si otro vehículo está frente a este en la trayectoria física
-        if (proyeccion > -0.1 && proyeccion < SEPARACION_SEGURA_VEHICULOS + 0.4 && lateral < 1.35) {
-          const espacioLibre = Math.max(0, proyeccion - SEPARACION_SEGURA_VEHICULOS)
-          const limiteEspacial = vehiculo.progreso + espacioLibre
-          if (limiteEspacial < limite) {
-            limite = limiteEspacial
-            motivo = 'vehículo delante'
-          }
-        }
-      }
-    }
+    // Los movimientos perpendiculares se excluyen mediante reservas. Una distancia
+    // circular a coches detenidos fuera del cruce causaba bloqueos mutuos.
 
     const progresoAnterior = vehiculo.progreso
     vehiculo.progreso = Math.min(limite, vehiculo.progreso + distancia)
@@ -292,28 +263,13 @@ export function avanzarVehiculos(
       vehiculo.progreso > progresoAnterior
     ) {
       vehiculo.reservado = destino.id
-      reservas.set(destino.id, vehiculo.id)
-      tiemposReserva.set(destino.id, 0)
     }
 
     const sobrante = Math.max(0, vehiculo.progreso - tramo.longitud)
     vehiculo.detenido = motivo && vehiculo.progreso <= progresoAnterior + 1e-5 ? motivo : ''
 
-    // Actualizar tiempo de detención para desatascar la simulación si un auto queda sin ruta
-    if (vehiculo.detenido) {
-      const acumulado = (tiemposBloqueado.get(vehiculo.id) ?? 0) + paso
-      tiemposBloqueado.set(vehiculo.id, acumulado)
-      if (acumulado > 12 && vehiculo.detenido === 'sin ruta disponible') {
-        terminados.add(vehiculo.id)
-      }
-    } else {
-      tiemposBloqueado.delete(vehiculo.id)
-    }
-
     // Liberar reserva del cruce cuando el auto sale completamente a la nueva calle
     if (vehiculo.reservado === tramo.de && vehiculo.progreso + 1e-5 >= DISTANCIA_LIBRE_CRUCE) {
-      reservas.delete(vehiculo.reservado)
-      tiemposReserva.delete(vehiculo.reservado)
       vehiculo.reservado = null
     }
 
@@ -321,7 +277,6 @@ export function avanzarVehiculos(
     if (vehiculo.progreso >= tramo.longitud) {
       if (destino.tipo === 'salida') {
         terminados.add(vehiculo.id)
-        tiemposBloqueado.delete(vehiculo.id)
         continue
       }
       vehiculo.indice += 1

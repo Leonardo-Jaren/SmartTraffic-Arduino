@@ -9,10 +9,11 @@ import type {
   UbicacionSemaforo,
 } from '@/types/trafico'
 import { ESQUINAS } from '../useDisposicionSemaforos'
-import { NODOS, RADIO_GIRO_VEHICULO, SEMAFOROS_BASE, obtenerRotacionSemaforo, obtenerTramo } from '../simulacion/mapa'
+import { NODOS, SEMAFOROS_BASE, obtenerRotacionSemaforo, obtenerTramo } from '../simulacion/mapa'
 import { obtenerColorSemaforo } from '../simulacion/semaforos'
 import type { crearMaqueta } from './maqueta'
 import { colorearSemaforo, crearSemaforo } from './semaforos'
+import { obtenerPosicionVehiculo } from './trayectorias'
 import { animarVehiculo, crearVehiculo } from './vehiculos'
 
 function pintar(mesh: THREE.Mesh, color: number) {
@@ -31,81 +32,6 @@ function liberarObjeto(objeto: THREE.Object3D) {
   })
   geometrias.forEach((geometria) => geometria.dispose())
   materialesUnicos.forEach((material) => material.dispose())
-}
-
-function calcularGiro(
-  entrada: { x: number; z: number },
-  salida: { x: number; z: number },
-  cruce: { x: number; z: number },
-  porcentaje: number,
-) {
-  const radio = RADIO_GIRO_VEHICULO
-  const inicio = { x: cruce.x - entrada.x * radio, z: cruce.z - entrada.z * radio }
-  const control1 = { x: cruce.x - entrada.x * radio * 0.45, z: cruce.z - entrada.z * radio * 0.45 }
-  const control2 = { x: cruce.x + salida.x * radio * 0.45, z: cruce.z + salida.z * radio * 0.45 }
-  const fin = { x: cruce.x + salida.x * radio, z: cruce.z + salida.z * radio }
-  const t = THREE.MathUtils.clamp(porcentaje, 0, 1)
-  const inverso = 1 - t
-  const x =
-    inverso ** 3 * inicio.x + 3 * inverso ** 2 * t * control1.x + 3 * inverso * t ** 2 * control2.x + t ** 3 * fin.x
-  const z =
-    inverso ** 3 * inicio.z + 3 * inverso ** 2 * t * control1.z + 3 * inverso * t ** 2 * control2.z + t ** 3 * fin.z
-  const dx =
-    3 * inverso ** 2 * (control1.x - inicio.x) +
-    6 * inverso * t * (control2.x - control1.x) +
-    3 * t ** 2 * (fin.x - control2.x)
-  const dz =
-    3 * inverso ** 2 * (control1.z - inicio.z) +
-    6 * inverso * t * (control2.z - control1.z) +
-    3 * t ** 2 * (fin.z - control2.z)
-  return { x, z, dx, dz }
-}
-
-function obtenerPosicionVehiculo(vehiculo: Vehiculo, tramo: NonNullable<ReturnType<typeof obtenerTramo>>) {
-  const anterior = vehiculo.ruta[vehiculo.indice - 1] ? obtenerTramo(vehiculo.ruta[vehiculo.indice - 1]!) : undefined
-  const siguiente = vehiculo.ruta[vehiculo.indice + 1] ? obtenerTramo(vehiculo.ruta[vehiculo.indice + 1]!) : undefined
-  const direccion = (id: string) => {
-    const segmento = obtenerTramo(id)
-    if (!segmento) return null
-    const a = NODOS[segmento.de]!
-    const b = NODOS[segmento.hacia]!
-    return { x: (b.x - a.x) / segmento.longitud, z: (b.z - a.z) / segmento.longitud }
-  }
-
-  if (siguiente && tramo.hacia === siguiente.de && NODOS[tramo.hacia]?.tipo === 'cruce') {
-    const entrada = direccion(tramo.id)
-    const salida = direccion(siguiente.id)
-    const cruce = NODOS[tramo.hacia]!
-    if (entrada && salida && Math.abs(entrada.x * salida.x + entrada.z * salida.z) < 0.98) {
-      const inicioGiro = tramo.longitud - RADIO_GIRO_VEHICULO
-      if (vehiculo.progreso >= inicioGiro)
-        return calcularGiro(entrada, salida, cruce, (vehiculo.progreso - inicioGiro) / (RADIO_GIRO_VEHICULO * 2))
-    }
-  }
-
-  if (anterior && anterior.hacia === tramo.de && NODOS[tramo.de]?.tipo === 'cruce') {
-    const entrada = direccion(anterior.id)
-    const salida = direccion(tramo.id)
-    const cruce = NODOS[tramo.de]!
-    if (
-      entrada &&
-      salida &&
-      Math.abs(entrada.x * salida.x + entrada.z * salida.z) < 0.98 &&
-      vehiculo.progreso <= RADIO_GIRO_VEHICULO
-    ) {
-      return calcularGiro(entrada, salida, cruce, 0.5 + vehiculo.progreso / (RADIO_GIRO_VEHICULO * 2))
-    }
-  }
-
-  const a = NODOS[tramo.de]!
-  const b = NODOS[tramo.hacia]!
-  const proporcion = THREE.MathUtils.clamp(vehiculo.progreso / tramo.longitud, 0, 1)
-  return {
-    x: a.x + (b.x - a.x) * proporcion,
-    z: a.z + (b.z - a.z) * proporcion,
-    dx: (b.x - a.x) / tramo.longitud,
-    dz: (b.z - a.z) / tramo.longitud,
-  }
 }
 
 export function crearDinamicos(escena: THREE.Group, maqueta: ReturnType<typeof crearMaqueta>) {
@@ -174,8 +100,9 @@ export function crearDinamicos(escena: THREE.Group, maqueta: ReturnType<typeof c
       pintar(cruce, seleccion?.tipo === 'cruce' && seleccion.id === id ? 0x4a8792 : 0x303a45)
     }
     const visibles = mostrarVehiculos && modo === 'simulacion' ? vehiculos : []
+    const idsVisibles = new Set(visibles.map((vehiculo) => vehiculo.id))
     for (const [id, objeto] of autos) {
-      if (!visibles.some((v) => v.id === id)) {
+      if (!idsVisibles.has(id)) {
         escena.remove(objeto)
         liberarObjeto(objeto)
         autos.delete(id)

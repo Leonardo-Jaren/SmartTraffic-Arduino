@@ -39,6 +39,7 @@ export interface FaseCruce {
 }
 
 export interface Vehiculo {
+  carril?: 0 | 1
   id: number
   ruta: string[]
   indice: number

@@ -1,6 +1,6 @@
 import { computed, reactive, ref, watch } from 'vue'
 import type { Eje, Modo, Seleccion, Tiempos } from '@/types/trafico'
-import { validarTiempos } from './simulacion/luces'
+import { TIEMPOS_INICIALES, validarTiempos } from './simulacion/luces'
 import { analizarImpactos, describirTramo } from './simulacion/rutas'
 import { useDispositivo } from './useDispositivo'
 import { useSimulacion } from './useSimulacion'
@@ -40,12 +40,16 @@ export function useTablero() {
 
   watch(modo, (nuevo) => {
     mensaje.value = ''
+    Object.assign(
+      borrador,
+      nuevo === 'simulacion' ? simulacion.tiempos : (dispositivo.estado.value.tiempos_confirmados ?? TIEMPOS_INICIALES),
+    )
     if (nuevo === 'dispositivo') simulacion.activo.value = false
   })
 
   async function aplicarTiempos() {
     const copia = { ...borrador }
-    const error = validarTiempos(copia)
+    const error = validarTiempos(copia, modo.value === 'simulacion')
     if (error) {
       mensaje.value = error
       return

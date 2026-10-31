@@ -1,10 +1,21 @@
 import type { FaseCruce, Tiempos } from '@/types/trafico'
-import { CRUCES, METROS_POR_UNIDAD, TRAMOS, VELOCIDAD_OLA } from './mapa'
+import { CRUCES, METROS_POR_UNIDAD, NODOS, TRAMOS, VELOCIDAD_OLA } from './mapa'
 
 export const TIEMPOS_INICIALES: Tiempos = { principal: 30, secundaria: 15, amarillo: 3, todo_rojo: 2 }
 
-export function validarTiempos(t: Tiempos): string | null {
+// Tiempos de demostración independientes de los límites del dispositivo físico.
+export const TIEMPOS_SIMULACION: Tiempos = { principal: 12, secundaria: 5, amarillo: 1, todo_rojo: 1 }
+
+export function validarTiempos(t: Tiempos, simulacion = false): string | null {
   if (!Object.values(t).every(Number.isInteger)) return 'Usa segundos enteros.'
+  if (simulacion) {
+    if (t.principal < 6 || t.principal > 120) return 'Principal: entre 6 y 120 s.'
+    if (t.secundaria < 4 || t.secundaria > 90) return 'Secundaria: entre 4 y 90 s.'
+    if (t.principal <= t.secundaria) return 'La vía principal necesita más tiempo que la secundaria.'
+    if (t.amarillo < 1 || t.amarillo > 10) return 'Amarillo: entre 1 y 10 s.'
+    if (t.todo_rojo < 1 || t.todo_rojo > 10) return 'Todo rojo: entre 1 y 10 s.'
+    return null
+  }
   if (t.principal < 15 || t.principal > 120) return 'Principal: entre 15 y 120 s.'
   if (t.secundaria < 10 || t.secundaria > 90) return 'Secundaria: entre 10 y 90 s.'
   if (t.principal <= t.secundaria) return 'La vía principal necesita más tiempo que la secundaria.'
@@ -20,6 +31,8 @@ export function validarTiempos(t: Tiempos): string | null {
 export function adaptarTiemposPorCierres(cruceId: string, base: Tiempos, cierres?: Set<string>): Tiempos {
   if (!cierres || cierres.size === 0) return base
 
+  const minimoH = Math.min(15, base.principal)
+  const minimoV = Math.min(10, base.secundaria)
   const entradaH = TRAMOS.find((t) => t.hacia === cruceId && t.eje === 'horizontal')
   const entradaV = TRAMOS.find((t) => t.hacia === cruceId && t.eje === 'vertical')
 
@@ -28,11 +41,11 @@ export function adaptarTiemposPorCierres(cruceId: string, base: Tiempos, cierres
 
   // Caso 1: Acceso vertical cerrado -> Se reduce secundaria al mínimo y se expande principal para aliviar la avenida
   if (vCerrado && !hCerrado) {
-    const ahorro = Math.max(0, base.secundaria - 10)
+    const ahorro = Math.max(0, base.secundaria - minimoV)
     return {
       ...base,
       principal: Math.min(120, base.principal + ahorro),
-      secundaria: 10,
+      secundaria: minimoV,
     }
   }
 
@@ -41,7 +54,7 @@ export function adaptarTiemposPorCierres(cruceId: string, base: Tiempos, cierres
     const extra = Math.min(25, Math.floor(base.principal * 0.4))
     return {
       ...base,
-      principal: Math.max(15, base.principal - extra),
+      principal: Math.max(minimoH, base.principal - extra),
       secundaria: Math.min(90, base.secundaria + extra),
     }
   }
@@ -52,10 +65,10 @@ export function adaptarTiemposPorCierres(cruceId: string, base: Tiempos, cierres
     const salidaHCerrada = salidas.some((t) => t.eje === 'horizontal')
     const salidaVCerrada = salidas.some((t) => t.eje === 'vertical')
     if (salidaHCerrada && !salidaVCerrada) {
-      return { ...base, principal: 15, secundaria: Math.min(90, base.secundaria + 20) }
+      return { ...base, principal: minimoH, secundaria: Math.min(90, base.secundaria + 20) }
     }
     if (salidaVCerrada && !salidaHCerrada) {
-      return { ...base, principal: Math.min(120, base.principal + 15), secundaria: 10 }
+      return { ...base, principal: Math.min(120, base.principal + 15), secundaria: minimoV }
     }
   }
 
@@ -66,7 +79,7 @@ export function calcularFase(id: string, tiempo: number, t: Tiempos, cierres?: S
   const tiemposActivos = adaptarTiemposPorCierres(id, t, cierres)
   const indice = CRUCES.indexOf(id)
   const columna = indice % 3
-  const paso = (6 * METROS_POR_UNIDAD) / (VELOCIDAD_OLA / 3.6)
+  const paso = (Math.abs(NODOS.I2!.x - NODOS.I1!.x) * METROS_POR_UNIDAD) / (VELOCIDAD_OLA / 3.6)
   const desfase = (indice < 3 ? 2 - columna : columna) * paso
   const ciclo =
     tiemposActivos.principal + tiemposActivos.secundaria + 2 * tiemposActivos.amarillo + 2 * tiemposActivos.todo_rojo

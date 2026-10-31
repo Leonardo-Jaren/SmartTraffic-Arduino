@@ -1,4 +1,13 @@
 import { defineConfig } from '@playwright/test'
+import { fileURLToPath } from 'node:url'
+
+const python = fileURLToPath(
+  new URL(
+    process.platform === 'win32' ? '../backend/env/Scripts/python.exe' : '../backend/env/bin/python',
+    import.meta.url,
+  ),
+)
+const manage = fileURLToPath(new URL('../backend/manage.py', import.meta.url))
 
 export default defineConfig({
   testDir: './e2e',
@@ -12,7 +21,7 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: `${process.platform === 'win32' ? '../backend/env/Scripts/python.exe' : '../backend/env/bin/python'} ../backend/manage.py runserver --noreload 127.0.0.1:8000`,
+      command: `"${python}" "${manage}" runserver --noreload 127.0.0.1:8000`,
       url: 'http://127.0.0.1:8000/api/dispositivo/',
       reuseExistingServer: !process.env.CI,
       timeout: 30_000,

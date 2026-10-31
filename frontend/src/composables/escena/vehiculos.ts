@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { optimizarVehiculo } from './optimizarVehiculo'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 
@@ -203,6 +204,7 @@ export function crearVehiculo(color: number) {
   // Banda continua de pilotos traseros LED (lightbar)
   piezaRedondeada(grupo, [0.46, 0.038, 0.03], frenoLed, [0, 0.26, -0.555], 0.015)
 
+  optimizarVehiculo(grupo)
   grupo.userData.ruedas = ruedas
   grupo.userData.lucesFreno = frenoLed
   return grupo

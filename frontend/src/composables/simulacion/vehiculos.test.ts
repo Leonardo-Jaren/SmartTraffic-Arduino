@@ -1,3 +1,4 @@
+import { movimientosCompatibles } from './movimientos'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ColorSemaforo, FaseCruce, Vehiculo } from '@/types/trafico'
 import {
@@ -57,7 +58,7 @@ describe('entrada y despeje de cruces', () => {
     const coche = auto()
     for (let paso = 0; paso < 80; paso++) avanzarVehiculos([coche], 0.1, new Set(), fases(color, 'rojo'), 120)
     expect(coche.progreso).toBeCloseTo(lineaH1, 8)
-    expect(4 - coche.progreso - 0.85).toBeCloseTo(DISTANCIA_LINEA_CRUCE, 8)
+    expect(obtenerTramo('H1-1')!.longitud - coche.progreso - 0.85).toBeCloseTo(DISTANCIA_LINEA_CRUCE, 8)
     expect(coche.reservado).toBeNull()
     expect(coche.detenido).toBe('semáforo')
   })
@@ -71,14 +72,24 @@ describe('entrada y despeje de cruces', () => {
 
   it('no entra con verde cuando una cola impediría salir del cruce', () => {
     const entrante = auto({ progreso: lineaH1 })
-    const cola = auto({ id: 2, indice: 1, progreso: 6 - DISTANCIA_PARADA_CRUCE })
+    const cola = Array.from(
+      {
+        length: Math.floor((obtenerTramo('H1-2')!.longitud - DISTANCIA_PARADA_CRUCE) / SEPARACION_SEGURA_VEHICULOS) + 1,
+      },
+      (_, i) =>
+        auto({
+          id: i + 2,
+          indice: 1,
+          progreso: obtenerTramo('H1-2')!.longitud - DISTANCIA_PARADA_CRUCE - i * SEPARACION_SEGURA_VEHICULOS,
+        }),
+    )
     const estado = fases('rojo', 'rojo')
     estado.find((fase) => fase.id === 'I3')!.horizontal = 'verde'
-    for (let paso = 0; paso < 80; paso++) avanzarVehiculos([entrante, cola], 0.1, new Set(), estado, 30)
+    for (let paso = 0; paso < 80; paso++) avanzarVehiculos([entrante, ...cola], 0.1, new Set(), estado, 30)
     expect(entrante.progreso).toBe(lineaH1)
     expect(entrante.reservado).toBeNull()
     expect(entrante.detenido).toBe('salida ocupada')
-    expect(cola.progreso).toBeCloseTo(6 - DISTANCIA_PARADA_CRUCE, 8)
+    expect(cola[0]!.progreso).toBeCloseTo(obtenerTramo('H1-2')!.longitud - DISTANCIA_PARADA_CRUCE, 8)
   })
 
   it('termina de despejar un cruce autorizado aunque el verde cambie a rojo', () => {
@@ -99,7 +110,7 @@ describe('entrada y despeje de cruces', () => {
     const vertical = auto({
       id: 2,
       ruta: ['V3-2', 'V3-3'],
-      progreso: 8 - DISTANCIA_PARADA_CRUCE,
+      progreso: obtenerTramo('V3-2')!.longitud - DISTANCIA_PARADA_CRUCE,
       destino: 'V3N',
     })
     avanzarVehiculos([horizontal, vertical], 0.1, new Set(), fases('verde', 'verde'), 120)
@@ -118,21 +129,26 @@ describe('entrada y despeje de cruces', () => {
 
 describe('espaciado de vehículos', () => {
   it('no crea otro auto si todas las entradas carecen de espacio', () => {
-    const ocupados = ENTRADAS.map((entrada, indice) =>
-      auto({
-        id: indice,
-        ruta: [TRAMOS.find((tramo) => tramo.de === entrada.id)!.id],
-        progreso: SEPARACION_SEGURA_VEHICULOS - 0.01,
-      }),
+    const ocupados = ENTRADAS.flatMap((entrada, indice) =>
+      ([0, 1] as const).map((carril) =>
+        auto({
+          id: indice * 2 + carril,
+          carril,
+          ruta: [TRAMOS.find((tramo) => tramo.de === entrada.id)!.id],
+          progreso: SEPARACION_SEGURA_VEHICULOS - 0.01,
+        }),
+      ),
     )
     expect(crearVehiculo(99, ocupados, new Set())).toBeNull()
   })
 
   it('conserva la distancia de la cola a ambos lados del cambio de tramo', () => {
     const delantero = auto({ id: 1, indice: 1, progreso: 0.4, reservado: 'I3' })
-    const siguiente = auto({ id: 2, progreso: 4.4 - SEPARACION_SEGURA_VEHICULOS })
+    const siguiente = auto({ id: 2, progreso: obtenerTramo('H1-1')!.longitud + 0.4 - SEPARACION_SEGURA_VEHICULOS })
     avanzarVehiculos([siguiente, delantero], 0.1, new Set(), fases('verde', 'rojo'), 120)
-    expect(4 + delantero.progreso - siguiente.progreso).toBeGreaterThanOrEqual(SEPARACION_SEGURA_VEHICULOS)
+    expect(obtenerTramo('H1-1')!.longitud + delantero.progreso - siguiente.progreso).toBeGreaterThanOrEqual(
+      SEPARACION_SEGURA_VEHICULOS - 1e-8,
+    )
     expect(siguiente.reservado).toBeNull()
   })
 })
@@ -194,8 +210,11 @@ describe('tráfico continuo con fases y cierres', () => {
         if (nuevo) coches.push(nuevo)
       }
       maximoPresentes = Math.max(maximoPresentes, coches.length)
-      const reservas = coches.filter((coche) => coche.reservado).map((coche) => coche.reservado)
-      if (new Set(reservas).size !== reservas.length) throw new Error(`Cruce reservado dos veces en ${tiempo}s`)
+      for (const a of coches)
+        for (const b of coches) {
+          if (a.id < b.id && a.reservado && a.reservado === b.reservado)
+            expect(movimientosCompatibles(a, b, a.reservado)).toBe(true)
+        }
       for (const coche of coches) {
         const previo = anteriores.get(coche.id)
         if (previo && coche.reservado && coche.reservado !== previo.reservado) {
@@ -210,6 +229,7 @@ describe('tráfico continuo con fases y cierres', () => {
           const siguiente = coordenadaEnCalle(otro)
           if (
             actual.calle === siguiente.calle &&
+            (coche.carril ?? 0) === (otro.carril ?? 0) &&
             Math.abs(actual.posicion - siguiente.posicion) < SEPARACION_SEGURA_VEHICULOS - 1e-8
           ) {
             throw new Error(`Cola sin separación en ${tiempo}s: ${JSON.stringify([coche, otro])}`)

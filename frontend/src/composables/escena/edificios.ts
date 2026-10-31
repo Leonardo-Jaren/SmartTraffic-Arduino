@@ -26,8 +26,8 @@ function crearFachadaAcristalada(
   acento: number,
 ) {
   const matCristal = new THREE.MeshPhysicalMaterial({
-    color: 0x1a2b38,
-    metalness: 0.55,
+    color: 0x537b92,
+    metalness: 0.3,
     roughness: 0.08,
     clearcoat: 1.0,
     clearcoatRoughness: 0.04,
@@ -75,13 +75,7 @@ function crearFachadaAcristalada(
 }
 
 /** Cubierta técnica moderna con peto perimetral, paneles solares y climatizadores HVAC */
-function crearCubiertaArquitectonica(
-  grupo: THREE.Group,
-  ancho: number,
-  fondo: number,
-  y: number,
-  acento: number,
-) {
+function crearCubiertaArquitectonica(grupo: THREE.Group, ancho: number, fondo: number, y: number, acento: number) {
   const matPeto = materialUrbano(0xd5dde5, 0.5)
   const matSuelo = materialUrbano(0x283038, 0.85)
   const matMetal = new THREE.MeshStandardMaterial({ color: 0x98a4af, metalness: 0.85, roughness: 0.25 })
@@ -108,9 +102,17 @@ function crearCubiertaArquitectonica(
 
   // Caseta de ascensores / acceso a cubierta
   const altCaseta = 0.38
-  piezaUrbana(grupo, [ancho * 0.34, altCaseta, fondo * 0.32], matPeto, [-ancho * 0.22, y + altCaseta / 2, -fondo * 0.18])
+  piezaUrbana(grupo, [ancho * 0.34, altCaseta, fondo * 0.32], matPeto, [
+    -ancho * 0.22,
+    y + altCaseta / 2,
+    -fondo * 0.18,
+  ])
   // Rejilla de ventilación de la caseta
-  piezaUrbana(grupo, [ancho * 0.28, altCaseta * 0.6, 0.02], matMetal, [-ancho * 0.22, y + altCaseta / 2, -fondo * 0.18 + fondo * 0.16 + 0.01])
+  piezaUrbana(grupo, [ancho * 0.28, altCaseta * 0.6, 0.02], matMetal, [
+    -ancho * 0.22,
+    y + altCaseta / 2,
+    -fondo * 0.18 + fondo * 0.16 + 0.01,
+  ])
 
   // Mástil de telecomunicaciones / pararrayos
   const antena = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.02, 0.55, 8), matMetal)
@@ -129,7 +131,13 @@ function crearCubiertaArquitectonica(
   // Matriz de paneles solares fotovoltaicos inclinados
   const solarWidth = ancho * 0.55
   const solarDepth = fondo * 0.32
-  const panel = piezaUrbana(grupo, [solarWidth, 0.025, solarDepth], matSolar, [ancho * 0.08, y + 0.12, fondo * 0.18], 0.01)
+  const panel = piezaUrbana(
+    grupo,
+    [solarWidth, 0.025, solarDepth],
+    matSolar,
+    [ancho * 0.08, y + 0.12, fondo * 0.18],
+    0.01,
+  )
   panel.rotation.x = -0.22
   panel.userData.proyectaSombra = true
 
@@ -150,13 +158,7 @@ export function crearEdificio(datos: EdificioUrbano) {
   const matAcento = materialUrbano(datos.acento, 0.38)
 
   // 1. Zócalo / podio de granito urbano
-  const plinto = piezaUrbana(
-    grupo,
-    [datos.ancho + 0.18, 0.08, datos.fondo + 0.18],
-    matPlinto,
-    [0, 0.24, 0],
-    0.02,
-  )
+  const plinto = piezaUrbana(grupo, [datos.ancho + 0.18, 0.08, datos.fondo + 0.18], matPlinto, [0, 0.24, 0], 0.02)
   plinto.userData.proyectaSombra = true
   plinto.userData.recibeSombra = true
 
@@ -176,8 +178,8 @@ export function crearEdificio(datos: EdificioUrbano) {
 
   // Fachada posterior con ventanales apaisados
   const matCristalSec = new THREE.MeshPhysicalMaterial({
-    color: 0x182430,
-    metalness: 0.6,
+    color: 0x496b83,
+    metalness: 0.3,
     roughness: 0.1,
     clearcoat: 0.8,
   })

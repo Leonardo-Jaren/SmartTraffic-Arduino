@@ -1,17 +1,17 @@
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import type { Eje, LuzVirtual, Tiempos, Vehiculo } from '@/types/trafico'
 import { CRUCES, METROS_POR_UNIDAD, VELOCIDAD_OLA } from './simulacion/mapa'
-import { calcularFase, TIEMPOS_INICIALES, validarTiempos } from './simulacion/luces'
+import { calcularFase, TIEMPOS_SIMULACION, validarTiempos } from './simulacion/luces'
 import { avanzarVehiculos, crearVehiculo } from './simulacion/vehiculos'
 
 export function useSimulacion() {
   const activo = ref(true)
   const mostrarVehiculos = ref(true)
-  const cantidad = ref(8)
-  const velocidad = ref(30)
+  const cantidad = ref(16)
+  const velocidad = ref(45)
   const limiteVelocidad = ref(80)
   const tiempo = ref(0)
-  const tiempos = reactive<Tiempos>({ ...TIEMPOS_INICIALES })
+  const tiempos = reactive<Tiempos>({ ...TIEMPOS_SIMULACION })
   const cierres = ref(new Set<string>())
   const vehiculos = ref<Vehiculo[]>([])
   const lucesVirtuales = ref<LuzVirtual[]>([])
@@ -97,9 +97,10 @@ export function useSimulacion() {
   }
 
   function aplicarTiempos(nuevos: Tiempos): boolean {
-    const error = validarTiempos(nuevos)
+    const error = validarTiempos(nuevos, true)
     errorTiempos.value = error || ''
     if (error) return false
+    ultimoIngreso = 0
     Object.assign(tiempos, nuevos)
     tiempo.value = 0
     vehiculos.value = []

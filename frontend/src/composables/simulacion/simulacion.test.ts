@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { FaseCruce, Vehiculo, EstadoDispositivo } from '@/types/trafico'
-import { CRUCES, NODOS, SEMAFOROS_BASE, TRAMOS, obtenerRotacionSemaforo } from './mapa'
+import {
+  DISTANCIA_PARADA_CRUCE,
+  obtenerTramo,
+  CRUCES,
+  NODOS,
+  SEMAFOROS_BASE,
+  TRAMOS,
+  obtenerRotacionSemaforo,
+} from './mapa'
 import { calcularFase, TIEMPOS_INICIALES, validarTiempos, adaptarTiemposPorCierres } from './luces'
 import { avanzarVehiculos } from './vehiculos'
 import { calcularRuta, analizarImpactos } from './rutas'
@@ -11,7 +19,7 @@ function vehiculo(parcial: Partial<Vehiculo> = {}): Vehiculo {
     id: 1,
     ruta: ['H1-1', 'H1-2', 'H1-3', 'H1-4'],
     indice: 0,
-    progreso: 3.3,
+    progreso: obtenerTramo('H1-1')!.longitud - DISTANCIA_PARADA_CRUCE,
     destino: 'H1O',
     detenido: '',
     reservado: null,
@@ -142,10 +150,10 @@ describe('movimiento de vehículos', () => {
   it('se detiene ante rojo y ante un cierre en el tramo actual', () => {
     const auto = vehiculo()
     avanzarVehiculos([auto], 0.1, new Set(), fase('rojo', 'verde'), 30)
-    expect(auto.progreso).toBe(3.3)
+    expect(auto.progreso).toBe(obtenerTramo('H1-1')!.longitud - DISTANCIA_PARADA_CRUCE)
     expect(auto.detenido).toBe('semáforo')
     avanzarVehiculos([auto], 0.1, new Set(['H1-1']), fase('verde', 'rojo'), 30)
-    expect(auto.progreso).toBe(3.3)
+    expect(auto.progreso).toBe(obtenerTramo('H1-1')!.longitud - DISTANCIA_PARADA_CRUCE)
     expect(auto.detenido).toBe('tramo cerrado')
   })
   it('busca otra salida cuando el destino queda bloqueado', () => {
@@ -156,16 +164,21 @@ describe('movimiento de vehículos', () => {
   })
   it('no deja entrar otro vehículo mientras el cruce está reservado', () => {
     const dentro = vehiculo({ id: 1, ruta: ['H1-2', 'H1-3', 'H1-4'], progreso: 0.1, reservado: 'I3' })
-    const esperando = vehiculo({ id: 2, ruta: ['V3-2', 'V3-3'], progreso: 7.3, destino: 'V3N' })
+    const esperando = vehiculo({
+      id: 2,
+      ruta: ['V3-2', 'V3-3'],
+      progreso: obtenerTramo('V3-2')!.longitud - DISTANCIA_PARADA_CRUCE,
+      destino: 'V3N',
+    })
     avanzarVehiculos([dentro, esperando], 0.1, new Set(), fase('rojo', 'verde'), 30)
-    expect(esperando.progreso).toBe(7.3)
+    expect(esperando.progreso).toBe(obtenerTramo('V3-2')!.longitud - DISTANCIA_PARADA_CRUCE)
     expect(esperando.detenido).toBe('cruce ocupado')
   })
   it('espera cuando la salida del cruce está ocupada', () => {
     const entrante = vehiculo()
     const delante = vehiculo({ id: 2, ruta: ['H1-2', 'H1-3', 'H1-4'], progreso: 0.3 })
     avanzarVehiculos([entrante, delante], 0.1, new Set(), fase('verde', 'rojo'), 30)
-    expect(entrante.progreso).toBe(3.3)
+    expect(entrante.progreso).toBe(obtenerTramo('H1-1')!.longitud - DISTANCIA_PARADA_CRUCE)
     expect(entrante.detenido).toBe('salida ocupada')
   })
 })

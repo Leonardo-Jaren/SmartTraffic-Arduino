@@ -1,6 +1,8 @@
 import * as THREE from 'three'
 import { crearEdificio, type EdificioUrbano } from './edificios'
 import { materialUrbano } from './geometriaUrbana'
+import { crearArquitectura } from './arquitecturas'
+import { crearResidencia } from './residencia'
 import { crearParque } from './parque'
 
 /** Farola vial LED minimalista con emisión cálida */
@@ -137,12 +139,39 @@ export function crearCiudad(escena: THREE.Group) {
     },
   ]
 
-  edificios.forEach((datos) => escena.add(crearEdificio(datos)))
-  crearParque(escena)
+  // Ocho modelos compartidos entre las parcelas: repetir edificios no duplica sus geometrías.
+  const modelos = edificios.map((datos, indice) =>
+    indice === 0 || indice === 6
+      ? crearEdificio({ ...datos, x: 0, z: 0, giro: 0 })
+      : crearArquitectura(datos, (indice - 1) % 4),
+  )
+  let numero = 0
+  const colocar = (x: number, z: number, giro: number) => {
+    const edificio = modelos[((numero++ % 4) * 3 + Math.floor((numero - 1) / 4)) % modelos.length]!.clone()
+    edificio.position.set(x, 0, z)
+    edificio.rotation.y = giro
+    edificio.scale.set(1.1 + (numero % 2) * 0.08, 0.85 + (numero % 4) * 0.18, 1.05 + (numero % 3) * 0.08)
+    escena.add(edificio)
+  }
+  const frentes = [-18, -10.8, -6.8, -2.8, 2.8, 6.8, 10.8, 18]
+  for (const x of frentes) {
+    colocar(x, -13, 0)
+    colocar(x, -6, Math.PI)
+    colocar(x, 6, 0)
+    colocar(x, 13, Math.PI)
+  }
+  for (const z of [-2.5, 2.5]) {
+    colocar(-18, z, Math.PI / 2)
+    colocar(18, z, -Math.PI / 2)
+  }
+  const parques = new THREE.Group()
+  crearParque(parques)
+  parques.position.x = -10
+  escena.add(parques)
+  escena.add(crearResidencia())
 
-  // Alumbrado vial LED en las avenidas
-  for (const z of [-5.5, 0, 5.5]) {
-    escena.add(crearFarolaModerna(-8.6, z, -Math.PI / 2))
-    escena.add(crearFarolaModerna(5.4, z, Math.PI / 2))
+  for (const x of [-18, -10, -6, 6, 10, 18]) {
+    escena.add(crearFarolaModerna(x, -10.2, Math.PI / 2))
+    escena.add(crearFarolaModerna(x, 10.2, -Math.PI / 2))
   }
 }

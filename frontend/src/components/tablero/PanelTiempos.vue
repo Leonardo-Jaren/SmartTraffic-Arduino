@@ -26,25 +26,52 @@ defineEmits<{ aplicar: [] }>()
     </div>
     <p class="texto-secundario">
       {{
-        modo === 'simulacion' ? 'Ajustes para el entorno virtual.' : 'Se aplican solo cuando el Arduino los confirma.'
+        modo === 'simulacion'
+          ? 'Ciclo corto de animación. No modifica los tiempos del Arduino.'
+          : 'Se aplican solo cuando el Arduino los confirma.'
       }}
     </p>
     <div class="campos-tiempo">
       <label
-        ><span><i class="mini-punto verde"></i> Vía principal <small>15–120 s</small></span>
-        <div><input v-model.number="tiempos.principal" type="number" min="15" max="120" /><b>s</b></div></label
+        ><span
+          ><i class="mini-punto verde"></i> Vía principal
+          <small>{{ modo === 'simulacion' ? 6 : 15 }}–120 s</small></span
+        >
+        <div>
+          <input v-model.number="tiempos.principal" type="number" :min="modo === 'simulacion' ? 6 : 15" max="120" /><b
+            >s</b
+          >
+        </div></label
       >
       <label
-        ><span><i class="mini-punto azul"></i> Vía secundaria <small>10–90 s</small></span>
-        <div><input v-model.number="tiempos.secundaria" type="number" min="10" max="90" /><b>s</b></div></label
+        ><span
+          ><i class="mini-punto azul"></i> Vía secundaria <small>{{ modo === 'simulacion' ? 4 : 10 }}–90 s</small></span
+        >
+        <div>
+          <input v-model.number="tiempos.secundaria" type="number" :min="modo === 'simulacion' ? 4 : 10" max="90" /><b
+            >s</b
+          >
+        </div></label
       >
       <label
-        ><span><i class="mini-punto amarillo"></i> Amarillo <small>3–10 s</small></span>
-        <div><input v-model.number="tiempos.amarillo" type="number" min="3" max="10" /><b>s</b></div></label
+        ><span
+          ><i class="mini-punto amarillo"></i> Amarillo <small>{{ modo === 'simulacion' ? 1 : 3 }}–10 s</small></span
+        >
+        <div>
+          <input v-model.number="tiempos.amarillo" type="number" :min="modo === 'simulacion' ? 1 : 3" max="10" /><b
+            >s</b
+          >
+        </div></label
       >
       <label
-        ><span><i class="mini-punto rojo"></i> Todo en rojo <small>2–10 s</small></span>
-        <div><input v-model.number="tiempos.todo_rojo" type="number" min="2" max="10" /><b>s</b></div></label
+        ><span
+          ><i class="mini-punto rojo"></i> Todo en rojo <small>{{ modo === 'simulacion' ? 1 : 2 }}–10 s</small></span
+        >
+        <div>
+          <input v-model.number="tiempos.todo_rojo" type="number" :min="modo === 'simulacion' ? 1 : 2" max="10" /><b
+            >s</b
+          >
+        </div></label
       >
     </div>
     <button

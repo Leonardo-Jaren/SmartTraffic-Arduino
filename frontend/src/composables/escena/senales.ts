@@ -19,7 +19,7 @@ export function crearSenalesCeda(escena: THREE.Group) {
   const centro = new THREE.ShapeGeometry(triangulo(0.34, 0.28))
   const poste = new THREE.CylinderGeometry(0.027, 0.035, 0.94, 8)
   const accesosSinSemaforo = TRAMOS.filter((tramo) => {
-    if (NODOS[tramo.hacia]?.tipo !== 'cruce') return false
+    if (tramo.eje !== 'vertical' || NODOS[tramo.hacia]?.tipo !== 'cruce') return false
     return !SEMAFOROS_BASE.some((s) => s.cruce === tramo.hacia && s.eje === tramo.eje)
   })
   for (const entrada of accesosSinSemaforo) {
@@ -28,6 +28,7 @@ export function crearSenalesCeda(escena: THREE.Group) {
     const dx = (b.x - a.x) / entrada.longitud
     const dz = (b.z - a.z) / entrada.longitud
     const grupo = new THREE.Group()
+    grupo.userData = { eje: entrada.eje, tramo: entrada.id }
     const soporte = new THREE.Mesh(poste, metal)
     soporte.position.y = 0.47
     const borde = new THREE.Mesh(placa, rojo)
