@@ -13,6 +13,12 @@ La máscara deja guías blancas de 0,30 mm en los pads de las tiras. El diámetr
 
 Quedan pendientes la importación y el DRC de esta variante en EasyEDA, la comprobación en baquelita y la etapa de los nueve semáforos. El diseño de dos caras que ya está guardado en el proyecto se conserva como referencia.
 
+### Encaje sobre el UNO R3
+
+La comparación con el [CAD oficial A000066](https://docs.arduino.cc/hardware/uno-rev3) verificó la posición de los 32 contactos de J1–J4 y de los cuatro agujeros de montaje. Visto desde arriba con el USB a la izquierda, el pad cuadrado de J1 corresponde a D8 y el de J2 a D0/RX. Los pads cuadrados de J3 y J4 quedan a la izquierda y corresponden a la posición sin conexión de POWER y a A0. Entre los contactos más próximos de J1 y J2 hay 4,064 mm de centro a centro. Usa cuatro tiras separadas para respetar esa separación. [Pinout del UNO R3](https://docs.arduino.cc/resources/pinouts/A000066-full-pinout.pdf)
+
+Imprime la [plantilla mecánica](../../output/pdf/SmartTraffic_Plantilla_Encaje_y_Mediciones.pdf) al 100 % y mide la barra de 50 mm. Presenta las cuatro tiras en el UNO apagado y verifica que el papel calce sin forzarlas. Después mide la separación con las tiras que vas a soldar. El cobre, U1, R1, C1, C2 y las soldaduras quedan hacia el UNO. Comprueba la holgura sobre el USB-B, el jack DC, el ATmega328P y ambos ICSP, incluido el que queda junto al USB. El contorno también cubre el botón RESET. Revisa el acceso si necesitas accionarlo con el shield puesto. Si algo toca, elige tiras más altas y repite la prueba antes de transferir el cobre. [Guía visual de encaje](../../output/imagen/SmartTraffic_Encaje_Shield_UNO_R3.png)
+
 ## Diseño de referencia de dos caras
 
 Borrador para EasyEDA Standard. El proyecto existente **Smart traffic** contiene el esquema `Sheet_1` y la PCB `SmartTraffic_Shield_UNO_R3`. Para repetir la importación desde los archivos locales, abre **Archivo → Abrir → Eagle**.
