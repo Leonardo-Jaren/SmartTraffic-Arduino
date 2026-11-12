@@ -1,5 +1,18 @@
 # Shield SmartTraffic para Arduino UNO R3
 
+## Variante para baquelita de una cara
+
+- [PCB editable en formato Eagle](SmartTraffic_Shield_UNO_R3_Baquelita.brd).
+- [PDF A4 a escala 1:1 con un único dibujo de cobre](../../output/pdf/SmartTraffic_PCB_Baquelita_1_Cara_1a1.pdf).
+
+Se conservaron el contorno de 68,58 × 53,34 mm, los cuatro agujeros y las posiciones de las tiras J1–J4. Las ocho redes de la UART se volvieron a trazar íntegramente en cobre inferior, sin vías ni puentes. La comprobación geométrica local verificó continuidad y una separación mínima de 0,192 mm con pistas de 0,28 mm. U1, R1, C1 y C2 van del lado del cobre. Verifica el paso de 0,50 mm de U1 y la altura libre respecto al UNO con las tiras elegidas.
+
+Para abrir la variante en EasyEDA Standard, usa **Archivo → Abrir → Eagle** y selecciona el archivo `.brd` de una cara. Para obtener el PDF del editor, guarda esa variante y usa **Archivo → Exportar → PDF**. Selecciona el cobre inferior y el contorno, con el ajuste de espejo adecuado al método de impresión. El PDF incluido usa vista desde el lado de componentes para transferencia por contacto. Imprime al 100 % y coteja la barra de 50 mm. [Capas en EasyEDA](https://docs.easyeda.com/en/PCB/Layer-Manager/) · [Exportación de PCB](https://docs.easyeda.com/en/Export/Export-PCB/)
+
+Quedan pendientes la importación y el DRC de esta variante en EasyEDA, la comprobación en baquelita y la etapa de los nueve semáforos. El diseño de dos caras que ya está guardado en el proyecto se conserva como referencia.
+
+## Diseño de referencia de dos caras
+
 Borrador para EasyEDA Standard. El proyecto existente **Smart traffic** contiene el esquema `Sheet_1` y la PCB `SmartTraffic_Shield_UNO_R3`. Para repetir la importación desde los archivos locales, abre **Archivo → Abrir → Eagle**.
 
 La [PCB nativa de EasyEDA](SmartTraffic_Shield_UNO_R3_EasyEDA.json) conserva la revisión exportada del lienzo. Ábrela con **Archivo → Abrir → EasyEDA**. El [PDF A4 a escala 1:1](../../output/pdf/SmartTraffic_PCB_Escala_1a1.pdf) incluye ambas caras para comprobar el encaje en papel. Los archivos Eagle conservan las leyendas del borrador. La revisión nativa exportada carecía de esas dos leyendas de serigrafía.

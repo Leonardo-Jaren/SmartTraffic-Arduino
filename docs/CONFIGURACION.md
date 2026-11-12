@@ -37,12 +37,13 @@ Sustituye `COM3` por el puerto detectado y abre **Dispositivo** en la web. La ap
 
 ## Abrir o imprimir la PCB
 
-- [Archivo editable de la placa exportado desde EasyEDA Standard](../hardware/easyeda/SmartTraffic_Shield_UNO_R3_EasyEDA.json). Ábrelo con **Archivo → Abrir → EasyEDA**. El archivo corresponde a la revisión del lienzo exportada desde el editor.
-- [PDF de las dos caras a escala 1:1](../output/pdf/SmartTraffic_PCB_Escala_1a1.pdf). Imprime en A4 al 100 % o tamaño real y confirma con una regla que la barra mide 50 mm. La cara inferior se muestra desde arriba, sin espejo.
+- [PCB para baquelita de una cara](../hardware/easyeda/SmartTraffic_Shield_UNO_R3_Baquelita.brd). Ábrela con **Archivo → Abrir → Eagle**.
+- [PDF de una cara a escala 1:1](../output/pdf/SmartTraffic_PCB_Baquelita_1_Cara_1a1.pdf). Imprime en A4 al 100 % o tamaño real y confirma con una regla que la barra mide 50 mm. El dibujo contiene solo el cobre inferior y el contorno.
+- [Archivo editable de dos caras exportado desde EasyEDA Standard](../hardware/easyeda/SmartTraffic_Shield_UNO_R3_EasyEDA.json) y su [PDF de referencia](../output/pdf/SmartTraffic_PCB_Escala_1a1.pdf).
 - [Plantilla para probar el encaje y registrar las mediciones](../output/pdf/SmartTraffic_Plantilla_Encaje_y_Mediciones.pdf).
 - [Esquema, PCB Eagle y módulos de referencia](../hardware/easyeda/README.md).
 
-La revisión exportada tiene el contorno del UNO R3, los conectores de apilado y la UART. EasyEDA mostró 8/8 redes y 0 errores de DRC en esa revisión. El PDF es para papel. Para fabricar faltan verificar el mapa físico, el modelo de ESP32, las cargas, el arranque en rojo y la etapa y el trazado de las salidas de los nueve semáforos. El ESP32 todavía carece de firmware Wi-Fi en el repositorio.
+Ambas revisiones tienen el contorno del UNO R3, los conectores de apilado y la UART. EasyEDA mostró 8/8 redes y 0 errores de DRC en la revisión de dos caras. Para la variante de baquelita se verificaron localmente las ocho redes, la continuidad y la separación de las pistas. Quedan pendientes el DRC en EasyEDA, las comprobaciones físicas y el diseño de las salidas de los nueve semáforos. El ESP32 todavía carece de firmware Wi-Fi en el repositorio.
 
 ## Recuperar cambios de la otra laptop
 
