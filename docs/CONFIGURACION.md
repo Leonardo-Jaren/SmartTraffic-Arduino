@@ -38,7 +38,7 @@ Sustituye `COM3` por el puerto detectado y abre **Dispositivo** en la web. La ap
 ## Abrir o imprimir la PCB
 
 - [PCB para baquelita de una cara](../hardware/easyeda/SmartTraffic_Shield_UNO_R3_Baquelita.brd). Ábrela con **Archivo → Abrir → Eagle**.
-- [PDF de una cara a escala 1:1](../output/pdf/SmartTraffic_PCB_Baquelita_1_Cara_1a1.pdf). Imprime en A4 al 100 % o tamaño real y confirma con una regla que la barra mide 50 mm. El dibujo contiene solo el cobre inferior y el contorno.
+- [Máscara de cobre de una cara a escala 1:1](../output/pdf/SmartTraffic_PCB_Baquelita_1_Cara_1a1.pdf). Imprime en A4 al 100 % o tamaño real y confirma con una regla que la barra mide 50 mm. Usa la plantilla de encaje para marcar el contorno y los agujeros de montaje.
 - [Archivo editable de dos caras exportado desde EasyEDA Standard](../hardware/easyeda/SmartTraffic_Shield_UNO_R3_EasyEDA.json) y su [PDF de referencia](../output/pdf/SmartTraffic_PCB_Escala_1a1.pdf).
 - [Plantilla para probar el encaje y registrar las mediciones](../output/pdf/SmartTraffic_Plantilla_Encaje_y_Mediciones.pdf).
 - [Esquema, PCB Eagle y módulos de referencia](../hardware/easyeda/README.md).
