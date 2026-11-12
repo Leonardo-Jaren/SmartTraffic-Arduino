@@ -73,6 +73,7 @@ Las pruebas de navegador reutilizan Django y Vite si ya están funcionando local
 
 ## Documentación
 
+- [Configuración en otra computadora y exportación de la PCB](docs/CONFIGURACION.md)
 - [Análisis de la maqueta y mapa](docs/ANALISIS_MAQUETA.md)
 - [Electrónica y tabla de conexiones](docs/ELECTRONICA.md)
 - [Guía visual PDF para soldar y conectar los seis semáforos](docs/GUIA_VISUAL_CONEXIONES_ARDUINO.pdf)

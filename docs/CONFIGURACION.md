@@ -1,0 +1,59 @@
+# Configuración de SmartTraffic en otra computadora
+
+## Ejecutar la web en Windows
+
+Instala Python compatible con `backend/requirements.txt`, Node.js 22.18 o posterior de la rama 22, o Node.js 24.12 o superior, y un navegador con WebGL. Abre PowerShell en la raíz del repositorio.
+
+```powershell
+cd backend
+py -3.12 -m venv env
+.\env\Scripts\python.exe -m pip install -r requirements.txt
+.\env\Scripts\python.exe manage.py migrate
+.\env\Scripts\python.exe manage.py runserver 127.0.0.1:8000
+```
+
+En una segunda terminal, también desde la raíz del repositorio:
+
+```powershell
+cd frontend
+npm ci
+npm run dev
+```
+
+Abre la URL que imprime Vite y selecciona **Simulación** para probar la interfaz. Vite envía `/api` a Django en `127.0.0.1:8000`. La API actual carece de autenticación y se ejecuta para desarrollo local. En Linux o macOS usa los [comandos del README](../README.md#instalar-y-ejecutar).
+
+## Conectar el UNO por USB
+
+Usa el sketch [SmartTraffic.ino](../arduino/SmartTraffic/SmartTraffic.ino) con la placa correspondiente en Arduino IDE. Mantén `MAPA_CONFIRMADO=false` hasta cotejar el cableado y los movimientos de la maqueta. El sketch versionado controla seis semáforos mediante 18 salidas y usa 115200 baudios. En el borrador del shield, JP1 debe estar abierto durante la carga del sketch y mientras el puente USB tenga el control de D0/D1.
+
+Con el UNO conectado a la misma computadora que Django y el monitor serie cerrado, ejecuta en otra terminal, desde `backend`:
+
+```powershell
+.\env\Scripts\python.exe manage.py puente_serial --listar
+.\env\Scripts\python.exe manage.py puente_serial --puerto COM3 --baud 115200
+```
+
+Sustituye `COM3` por el puerto detectado y abre **Dispositivo** en la web. La aplicación distingue los estados recibidos recientemente de los datos de simulación. Si mueves la configuración de SQLite con `SMARTTRAFFIC_DB`, usa el mismo valor para el servidor y para el puente, y ejecuta las migraciones sobre esa base. [Protocolo y arquitectura](ARQUITECTURA.md) · [Pruebas y límites](PRUEBAS.md)
+
+## Abrir o imprimir la PCB
+
+- [Archivo editable de la placa exportado desde EasyEDA Standard](../hardware/easyeda/SmartTraffic_Shield_UNO_R3_EasyEDA.json). Ábrelo con **Archivo → Abrir → EasyEDA**. El archivo corresponde a la revisión del lienzo exportada desde el editor.
+- [PDF de las dos caras a escala 1:1](../output/pdf/SmartTraffic_PCB_Escala_1a1.pdf). Imprime en A4 al 100 % o tamaño real y confirma con una regla que la barra mide 50 mm. La cara inferior se muestra desde arriba, sin espejo.
+- [Plantilla para probar el encaje y registrar las mediciones](../output/pdf/SmartTraffic_Plantilla_Encaje_y_Mediciones.pdf).
+- [Esquema, PCB Eagle y módulos de referencia](../hardware/easyeda/README.md).
+
+La revisión exportada tiene el contorno del UNO R3, los conectores de apilado y la UART. EasyEDA mostró 8/8 redes y 0 errores de DRC en esa revisión. El PDF es para papel. Para fabricar faltan verificar el mapa físico, el modelo de ESP32, las cargas, el arranque en rojo y la etapa y el trazado de las salidas de los nueve semáforos. El ESP32 todavía carece de firmware Wi-Fi en el repositorio.
+
+## Recuperar cambios de la otra laptop
+
+En la otra laptop, abre el repositorio y ejecuta:
+
+```powershell
+git status --short --branch
+git diff
+git diff --cached
+git fetch origin
+git log --oneline origin/main..HEAD
+```
+
+Revisa también los archivos nuevos que enumera `git status`. Guarda los cambios de código o documentación que quieras compartir en un commit y súbelos en una rama propia para compararlos con `main`. Conserva localmente credenciales, archivos `.env`, bases de datos, entornos virtuales y dependencias. Los cambios que aún estén solo en esa laptop quedan disponibles únicamente allí hasta que los subas.
