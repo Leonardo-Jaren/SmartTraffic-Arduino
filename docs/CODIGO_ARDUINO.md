@@ -84,7 +84,7 @@ void procesarConfiguracion(char *partes[], byte cantidad) {
   for (byte i = 1; i < 5; i++) {
     if (!leerNumero(partes[i + 1], valores[i])) { confirmar(valores[0], "RECHAZADO", "FORMATO"); return; }
   }
-  if (valores[1] < 15 || valores[1] > 120 || valores[2] < 10 || valores[2] > 90 ||
+  if (valores[1] < 1 || valores[1] > 120 || valores[2] < 1 || valores[2] > 90 ||
       valores[1] <= valores[2] || valores[3] < 3 || valores[3] > 10 || valores[4] < 2 || valores[4] > 10) {
     confirmar(valores[0], "RECHAZADO", "VALORES"); return;
   }
@@ -235,6 +235,6 @@ ACK,17,APLICADO,OK
 ACK,17,RECHAZADO,VALORES
 ```
 
-`CONFIG` contiene identificador, verde principal, verde secundaria, amarillo y todo rojo en segundos. Límites: principal 15–120, secundaria 10–90, principal mayor que secundaria, amarillo 3–10 y todo rojo 2–10. Con el mapa activo se aplica durante todo rojo y el ACK se envía después de aplicar. Con el mapa bloqueado se guardan los valores en RAM sin activar la secuencia. Al reiniciar vuelven los valores iniciales. Django no presenta una solicitud como aplicada hasta recibir el ACK.
+`CONFIG` contiene identificador, verde principal, verde secundaria, amarillo y todo rojo en segundos. Límites: principal 1–120, secundaria 1–90, principal mayor que secundaria, amarillo 3–10 y todo rojo 2–10. Con el mapa activo se aplica durante todo rojo y el ACK se envía después de aplicar. Con el mapa bloqueado se guardan los valores en RAM sin activar la secuencia. Al reiniciar vuelven los valores iniciales. Django no presenta una solicitud como aplicada hasta recibir el ACK.
 
 Los reportes describen salidas ordenadas por el programa; sin sensores no verifican eléctricamente si un LED está encendido. El código y la guía son para una maqueta educativa, no para controlar vías reales.

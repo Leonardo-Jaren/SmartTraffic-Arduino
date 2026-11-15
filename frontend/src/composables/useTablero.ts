@@ -58,6 +58,7 @@ export function useTablero() {
       simulacion.aplicarTiempos(copia)
       mensaje.value = 'Tiempos aplicados solo a la simulación.'
     } else {
+      mensaje.value = 'Enviando tiempos al Arduino…'
       mensaje.value = await dispositivo.solicitar(copia)
     }
   }

@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Clock3, Send } from '@lucide/vue'
 import type { Modo, Tiempos } from '@/types/trafico'
+import { MIN_VERDE_DISPOSITIVO } from '@/composables/simulacion/luces'
 
-defineProps<{
+const props = defineProps<{
   tiempos: Tiempos
   modo: Modo
   conectado: boolean
@@ -12,6 +14,12 @@ defineProps<{
   mensaje: string
   comando: { id: number; estado: string; mensaje: string } | null
 }>()
+
+const esperandoConfirmacion = computed(
+  () => props.modo === 'dispositivo' && ['PENDIENTE', 'ENVIADO'].includes(props.comando?.estado ?? ''),
+)
+const cargando = computed(() => props.enviando || esperandoConfirmacion.value)
+
 defineEmits<{ aplicar: [] }>()
 </script>
 
@@ -27,28 +35,28 @@ defineEmits<{ aplicar: [] }>()
     <p class="texto-secundario">
       {{
         modo === 'simulacion'
-          ? 'Ciclo corto de animación. No modifica los tiempos del Arduino.'
-          : 'Se aplican solo cuando el Arduino los confirma.'
+          ? 'En Simulación, los tiempos solo afectan la animación. Selecciona Dispositivo para enviarlos al Arduino.'
+          : 'Se aplican cuando el Arduino los confirma. En estado BLOQUEADO las luces seguirán rojas.'
       }}
     </p>
     <div class="campos-tiempo">
       <label
         ><span
           ><i class="mini-punto verde"></i> Vía principal
-          <small>{{ modo === 'simulacion' ? 6 : 15 }}–120 s</small></span
+          <small>{{ modo === 'simulacion' ? 6 : MIN_VERDE_DISPOSITIVO }}–120 s</small></span
         >
         <div>
-          <input v-model.number="tiempos.principal" type="number" :min="modo === 'simulacion' ? 6 : 15" max="120" /><b
+          <input v-model.number="tiempos.principal" type="number" :min="modo === 'simulacion' ? 6 : MIN_VERDE_DISPOSITIVO" max="120" /><b
             >s</b
           >
         </div></label
       >
       <label
         ><span
-          ><i class="mini-punto azul"></i> Vía secundaria <small>{{ modo === 'simulacion' ? 4 : 10 }}–90 s</small></span
+          ><i class="mini-punto azul"></i> Vía secundaria <small>{{ modo === 'simulacion' ? 4 : MIN_VERDE_DISPOSITIVO }}–90 s</small></span
         >
         <div>
-          <input v-model.number="tiempos.secundaria" type="number" :min="modo === 'simulacion' ? 4 : 10" max="90" /><b
+          <input v-model.number="tiempos.secundaria" type="number" :min="modo === 'simulacion' ? 4 : MIN_VERDE_DISPOSITIVO" max="90" /><b
             >s</b
           >
         </div></label
@@ -75,22 +83,31 @@ defineEmits<{ aplicar: [] }>()
       >
     </div>
     <button
+      type="button"
       class="boton principal ancho"
-      :disabled="enviando || (modo === 'dispositivo' && !conectado)"
+      :disabled="cargando || (modo === 'dispositivo' && !conectado)"
       @click="$emit('aplicar')"
     >
-      <Send :size="16" />
-      {{
-        modo === 'simulacion'
-          ? 'Aplicar a simulación'
-          : fuente === 'simulado'
-            ? 'Solicitar al simulador'
-            : 'Solicitar al Arduino'
-      }}
+      <span v-if="cargando" class="spinner-carga" aria-hidden="true"></span>
+      <Send v-else :size="16" />
+      <span>{{
+        cargando
+          ? esperandoConfirmacion
+            ? 'Esperando confirmación…'
+            : 'Enviando…'
+          : modo === 'simulacion'
+            ? 'Aplicar a simulación'
+            : fuente === 'simulado'
+              ? 'Solicitar al simulador'
+              : 'Solicitar al Arduino'
+      }}</span>
     </button>
+    <p v-if="modo === 'dispositivo' && !conectado" class="aviso-inline" role="status">
+      No se puede enviar: el panel necesita un reporte reciente del Arduino.
+    </p>
     <p v-if="mensaje" class="aviso-inline" role="status">{{ mensaje }}</p>
     <p v-if="modo === 'dispositivo' && comando" class="aviso-inline">
-      Solicitud #{{ comando.id }}: {{ comando.estado }} · {{ comando.mensaje || 'Esperando confirmación' }}
+      Última solicitud #{{ comando.id }}: {{ comando.estado }} · {{ comando.mensaje || 'Esperando confirmación' }}
     </p>
     <p v-if="modo === 'dispositivo'" class="nota-panel">
       {{
@@ -103,8 +120,26 @@ defineEmits<{ aplicar: [] }>()
       La principal debe tener más tiempo que la secundaria. El tráfico simulado no cambia automáticamente el Arduino.
     </p>
     <p class="nota-panel">
-      Rojo calculado: principal {{ tiempos.secundaria + tiempos.amarillo + 2 * tiempos.todo_rojo }} s · secundaria
+      Rojo calculado con los valores del formulario: principal {{ tiempos.secundaria + tiempos.amarillo + 2 * tiempos.todo_rojo }} s · secundaria
       {{ tiempos.principal + tiempos.amarillo + 2 * tiempos.todo_rojo }} s.
     </p>
   </section>
 </template>
+
+<style scoped>
+.spinner-carga {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: panel-tiempos-girar 0.75s linear infinite;
+}
+
+@keyframes panel-tiempos-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>

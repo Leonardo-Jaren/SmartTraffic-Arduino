@@ -9,6 +9,15 @@ from trafico.services.dispositivo import ServicioDispositivo
 from trafico.services.protocolo import formar_configuracion
 
 
+def abrir_puerto(nombre, baud):
+    # DTR/RTS pueden provocar un reinicio al abrir el puerto en placas Arduino.
+    puerto = serial.Serial(port=None, baudrate=baud, timeout=0.2, write_timeout=1)
+    puerto.dtr = True
+    puerto.rts = False
+    puerto.port = nombre
+    return puerto
+
+
 class Command(BaseCommand):
     help = 'Conecta un Arduino por USB al Django que se ejecuta en esta misma computadora.'
 
@@ -30,22 +39,30 @@ class Command(BaseCommand):
         try:
             while True:
                 try:
-                    with serial.Serial(opciones['puerto'], opciones['baud'], timeout=0.2, write_timeout=1) as puerto:
+                    with abrir_puerto(opciones['puerto'], opciones['baud']) as puerto:
                         repositorio.iniciar_puente(opciones['puerto'])
                         self.stdout.write('Puerto abierto. Esperando un estado válido del Arduino…')
+                        # DTR reinicia el UNO. Espera a que termine el arranque y lee un reporte nuevo.
+                        time.sleep(2)
+                        puerto.reset_input_buffer()
                         while True:
                             linea = puerto.readline(160)
                             if linea:
                                 try:
-                                    servicio.procesar_linea(linea.decode('ascii').strip())
+                                    linea = linea.decode('ascii').strip()
+                                    evento = servicio.procesar_linea(linea)
+                                    if evento['tipo'] in {'inicio', 'estado', 'ack'}:
+                                        self.stdout.write(f'Recibido: {linea}')
                                 except (UnicodeDecodeError, ValueError) as error:
                                     self.stderr.write(f'Línea ignorada: {error}')
                             if servicio.esta_conectado(repositorio.obtener_estado()):
                                 repositorio.vencer_comandos()
                                 comando = repositorio.tomar_pendiente()
                                 if comando:
-                                    puerto.write(formar_configuracion(comando))
+                                    configuracion = formar_configuracion(comando)
+                                    puerto.write(configuracion)
                                     puerto.flush()
+                                    self.stdout.write(f'Enviado: {configuracion.decode("ascii").strip()}')
                             else:
                                 repositorio.interrumpir_comandos('No llegan reportes recientes del Arduino.')
                 except (serial.SerialException, OSError) as error:

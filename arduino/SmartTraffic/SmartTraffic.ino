@@ -77,7 +77,7 @@ void procesarConfiguracion(char *partes[], byte cantidad) {
   for (byte i = 1; i < 5; i++) {
     if (!leerNumero(partes[i + 1], valores[i])) { confirmar(valores[0], "RECHAZADO", "FORMATO"); return; }
   }
-  if (valores[1] < 15 || valores[1] > 120 || valores[2] < 10 || valores[2] > 90 ||
+  if (valores[1] < 1 || valores[1] > 120 || valores[2] < 1 || valores[2] > 90 ||
       valores[1] <= valores[2] || valores[3] < 3 || valores[3] > 10 || valores[4] < 2 || valores[4] > 10) {
     confirmar(valores[0], "RECHAZADO", "VALORES"); return;
   }

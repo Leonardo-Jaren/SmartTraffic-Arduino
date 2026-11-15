@@ -130,8 +130,8 @@ const { contenedor, pantallaCompleta, abrirPantallaCompleta, cerrarPantallaCompl
         <div v-else-if="modo === 'dispositivo' && estado.modo === 'BLOQUEADO'" class="alerta">
           <ShieldCheck :size="18" />
           <div>
-            <strong>Dispositivo en rojo de seguridad.</strong> Comprueba el cableado de los semáforos antes de activar
-            el ciclo.
+            <strong>Dispositivo en rojo de seguridad.</strong> El estado BLOQUEADO no impide enviar tiempos; los
+            semáforos seguirán en rojo hasta verificar el mapa físico.
           </div>
         </div>
         <div v-else-if="modo === 'dispositivo' && estado.modo === 'PRUEBA'" class="alerta">

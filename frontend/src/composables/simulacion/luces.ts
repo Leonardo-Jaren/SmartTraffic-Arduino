@@ -3,6 +3,8 @@ import { CRUCES, METROS_POR_UNIDAD, NODOS, TRAMOS, VELOCIDAD_OLA } from './mapa'
 
 export const TIEMPOS_INICIALES: Tiempos = { principal: 30, secundaria: 15, amarillo: 3, todo_rojo: 2 }
 
+export const MIN_VERDE_DISPOSITIVO = 1
+
 // Tiempos de demostración independientes de los límites del dispositivo físico.
 export const TIEMPOS_SIMULACION: Tiempos = { principal: 12, secundaria: 5, amarillo: 1, todo_rojo: 1 }
 
@@ -16,8 +18,8 @@ export function validarTiempos(t: Tiempos, simulacion = false): string | null {
     if (t.todo_rojo < 1 || t.todo_rojo > 10) return 'Todo rojo: entre 1 y 10 s.'
     return null
   }
-  if (t.principal < 15 || t.principal > 120) return 'Principal: entre 15 y 120 s.'
-  if (t.secundaria < 10 || t.secundaria > 90) return 'Secundaria: entre 10 y 90 s.'
+  if (t.principal < MIN_VERDE_DISPOSITIVO || t.principal > 120) return `Principal: entre ${MIN_VERDE_DISPOSITIVO} y 120 s.`
+  if (t.secundaria < MIN_VERDE_DISPOSITIVO || t.secundaria > 90) return `Secundaria: entre ${MIN_VERDE_DISPOSITIVO} y 90 s.`
   if (t.principal <= t.secundaria) return 'La vía principal necesita más tiempo que la secundaria.'
   if (t.amarillo < 3 || t.amarillo > 10) return 'Amarillo: entre 3 y 10 s.'
   if (t.todo_rojo < 2 || t.todo_rojo > 10) return 'Todo rojo: entre 2 y 10 s.'
