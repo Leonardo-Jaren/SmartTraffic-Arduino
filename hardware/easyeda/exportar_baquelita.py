@@ -24,6 +24,9 @@ ORIGEN_X, ORIGEN_Y = (210 - ANCHO) / 2, 155
 MARGEN_ATAQUE = 0.04
 TOLERANCIA_TALADRO = 0.10
 DIAMETRO_GUIA = 0.30
+ANCHO_PISTA = 0.60
+SEPARACION_MINIMA = 0.50
+MARGEN_BORDE = 0.45
 
 NETLIST = {
     "UNO_TX": {"J2.2", "U1.5"},
@@ -117,10 +120,10 @@ def validar():
     bordes = [LineString([punto(w, "1"), punto(w, "2")]) for w in placa.findall("plain/wire[@layer='20']")]
     contornos = list(polygonize(bordes))
     comprobar(len(contornos) == 1 and contornos[0].bounds == (0, 0, ANCHO, ALTO), "Contorno inesperado")
-    zona = contornos[0].buffer(-0.75)
+    zona = contornos[0].buffer(-MARGEN_BORDE + 1e-7)
     montaje = unary_union([Point(punto(h)).buffer(float(h.get("drill")) / 2) for h in placa.findall("plain/hole")])
     pads, taladros = centros_y_pads(placa)
-    comprobar(len(pads) == 52 and len(taladros) == 38, "Cambió la cantidad de pads")
+    comprobar(len(pads) == len(taladros) == 52, "La versión de baquelita requiere 52 pads pasantes")
     senales = {s.get("name"): s for s in placa.findall("signals/signal")}
     contactos = {
         nombre: {f"{r.get('element')}.{r.get('pad')}" for r in senal.findall("contactref")}
@@ -134,15 +137,18 @@ def validar():
         pistas = []
         for wire in senal.findall("wire"):
             ancho = float(wire.get("width"))
-            comprobar(wire.get("layer") == "16" and ancho >= 0.28, f"Pista incompatible en {nombre}")
+            comprobar(wire.get("layer") == "16" and ancho >= ANCHO_PISTA, f"Pista incompatible en {nombre}")
             pistas.append(LineString([punto(wire, "1"), punto(wire, "2")]).buffer(ancho / 2))
         comprobar(all(zona.covers(pista) for pista in pistas), f"{nombre} se acerca al contorno")
         cobre[nombre] = unary_union(pistas + [pads[clave] for clave in contactos[nombre]])
 
     comprobar(all(zona.covers(forma) for forma in cobre.values()), "Hay cobre fuera del margen del borde")
-    comprobar(all(forma.distance(montaje) >= 0.17 for forma in cobre.values()), "Cobre cerca de un agujero de montaje")
+    comprobar(
+        all(forma.distance(montaje) >= SEPARACION_MINIMA for forma in cobre.values()),
+        "Cobre cerca de un agujero de montaje",
+    )
     separacion = min(a.distance(b) for a, b in combinations(cobre.values(), 2))
-    comprobar(separacion >= 0.17, "Separación entre cobres inferior a 0,17 mm")
+    comprobar(separacion >= SEPARACION_MINIMA, "Separación entre cobres inferior a 0,50 mm")
     perforaciones = unary_union([centro.buffer(radio + TOLERANCIA_TALADRO) for centro, radio in taladros.values()])
     for nombre, forma in cobre.items():
         comprobacion = forma.buffer(-MARGEN_ATAQUE).difference(perforaciones)
@@ -173,9 +179,9 @@ def exportar(cobre, taladros, salida):
 
     texto(20, 277, "SMARTTRAFFIC / SHIELD ARDUINO UNO", 9, True, verde)
     texto(20, 262, "Máscara de cobre para baquelita", 22, True)
-    texto(20, 250, "Una cara · A4 · Escala 1:1 · Borrador de la UART", 11, color=gris)
+    texto(20, 250, "Una cara · A4 · Escala 1:1 · Prototipo UART con pistas anchas", 11, color=gris)
     linea(20, 243, 190, 243)
-    texto(20, 232, "Dentro de las marcas se imprime únicamente el cobre.", 9.5)
+    texto(20, 232, "Pistas de 0,60 mm con al menos 0,50 mm entre redes distintas.", 9.5)
     texto(20, 225, "Las marcas exteriores ubican un tablero de 68,58 × 53,34 mm.", 9.5)
 
     pilotos = unary_union([centro.buffer(DIAMETRO_GUIA / 2) for centro, _ in taladros.values()])
@@ -209,11 +215,11 @@ def exportar(cobre, taladros, salida):
     texto(20, 99, "Imprime a tamaño real (100 %) y comprueba la barra de 50 mm.")
     texto(20, 92, "La vista es desde la cara sin cobre. Para transferencia por contacto,")
     texto(20, 85, "coloca el tóner hacia el cobre e imprime sin aplicar espejo adicional.")
-    texto(20, 78, "Los puntos blancos de 0,30 mm son guías. Las tiras se taladran a 1,00 mm.")
+    texto(20, 78, "Los puntos blancos son guías. Tiras y U1 usan 1,00 mm. R1, C1 y C2 usan 0,80 mm.")
     texto(20, 71, "Usa la plantilla mecánica aparte para el contorno y los cuatro agujeros de 3,20 mm.")
     texto(20, 57, "Comprobación del prototipo", 12, True, verde)
-    texto(20, 49, "U1 tiene paso de 0,50 mm. Comprueba el resultado en una muestra de baquelita.")
-    texto(20, 42, "U1, R1, C1 y C2 van del lado del cobre. Comprueba la holgura sobre el Arduino.")
+    texto(20, 49, "U1 usa un adaptador VSSOP-8 a DIP-8 de 7,62 mm entre filas y paso de 2,54 mm.")
+    texto(20, 42, "Monta el adaptador, R1, C1 y C2 del lado sin cobre. Alinea el pin 1 de U1 con el pad cuadrado.")
     texto(20, 35, "Este borrador contiene la UART. Las salidas de los semáforos siguen pendientes.")
     linea(20, 22, 190, 22)
     texto(20, 15, "Arte vectorial generado desde el archivo Eagle de una cara.", 8, color=gris)
