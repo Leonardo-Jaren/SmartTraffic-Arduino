@@ -3,21 +3,40 @@
 ## Variante para baquelita de una cara
 
 - [PCB editable para EasyEDA Standard](SmartTraffic_Shield_UNO_R3_Baquelita_EasyEDA.json).
-- [PCB editable en formato Eagle](SmartTraffic_Shield_UNO_R3_Baquelita.brd).
+- [PCB editable en formato Eagle](SmartTraffic_Shield_UNO_R3_Baquelita.brd) y [su esquema con las nueve borneras](SmartTraffic_Shield_UNO_R3_Baquelita.sch).
+- [Máscara exportada directamente desde EasyEDA](../../output/pdf/SmartTraffic_Borneras_EasyEDA_1a1.pdf) y [captura de la placa guardada](../../output/imagen/SmartTraffic_EasyEDA_Borneras.png).
 - [PDF A4 a escala 1:1 con un único dibujo de cobre](../../output/pdf/SmartTraffic_PCB_Baquelita_1_Cara_1a1.pdf).
 - [Vista ampliada de las pistas anchas y sus componentes](../../output/imagen/SmartTraffic_Baquelita_Pistas_Anchas.png). Las imágenes de `Vistas_SmartTraffic` muestran la revisión anterior con U1 SMD.
 
-El contorno de 68,58 × 53,34 mm, los cuatro agujeros y las posiciones de J1–J4 conservan la geometría del UNO R3 de referencia. Las ocho redes usan pistas de **0,60 mm** en cobre inferior, sin vías ni puentes de alambre. La distancia mínima de borde a borde es **1,127 mm entre pistas de redes distintas**. Al incluir las islas de soldadura, el mínimo es **0,615 mm** entre la pista de 5 V y los pads contiguos de J3. El margen al borde de la placa es de 0,45 mm. C2 se desplazó 2 mm y se simplificaron los recorridos alrededor de U1 y J5.
+El contorno de 68,58 × 53,34 mm, los cuatro agujeros y las posiciones de J1–J4 conservan la geometría del UNO R3 de referencia. Las 26 redes usan pistas de **0,60 mm** en cobre inferior, sin vías ni puentes de alambre. La distancia mínima de borde a borde es **1,127 mm entre pistas de redes distintas**. Al incluir las islas de soldadura, el mínimo es **0,611 mm** entre la pista D13 y el pad de tierra J1.7. El margen al borde de la placa es de 0,45 mm. J5.1 recibe una pista de tierra recta por debajo del pad. La bifurcación de la tierra común queda más abajo y se eliminó el bucle del trazado anterior.
 
 U1 es el TXU0202DCUR montado sobre un adaptador VSSOP-8 a DIP-8 de paso 2,54 mm y 7,62 mm entre filas, como el PA0042 con pines instalados. Alinea el pin 1 del adaptador con el pad cuadrado de U1. R1 es axial de 10 kΩ con paso de 7,62 mm. C1 y C2 son cerámicos radiales de 100 nF con paso de 5,08 mm. El adaptador y los componentes pasantes se montan en la cara sin cobre. [Adaptador PA0042](https://www.proto-advantage.com/store/datasheets/PA0042.pdf)
 
 Para revisar la versión nueva en EasyEDA Standard, usa **Archivo → Abrir → EasyEDA** con el JSON de baquelita. Comprueba que se vean los ocho orificios de U1 y ejecuta **Check DRC**. Para la transferencia, el PDF incluido usa la vista desde la cara sin cobre. Imprime en A4 al 100 %, coteja la barra de 50 mm y coloca el tóner hacia el cobre sin aplicar un espejo adicional. Marca el contorno y los agujeros de montaje con la [plantilla mecánica](../../output/pdf/SmartTraffic_Plantilla_Encaje_y_Mediciones.pdf). [DRC de EasyEDA](https://docs.easyeda.com/en/PCB/Design-Rule-Check/)
 
-La máscara incluye guías blancas de 0,30 mm. El CAD indica taladros de 1,00 mm para U1 y los conectores, 0,80 mm para R1, C1 y C2, y 3,20 mm para el montaje. Comprueba los diámetros contra las patas y espadines reales. El [exportador](exportar_baquelita.py) coteja las redes con el esquema UART y comprueba continuidad con una pérdida de cobre simulada de 0,04 mm por borde y un margen de perforación de 0,10 mm. Para regenerar el PDF desde la raíz, ejecuta `python hardware/easyeda/exportar_baquelita.py` con ReportLab y Shapely instalados.
+La máscara incluye guías blancas de 0,30 mm. El CAD indica taladros de 1,20 mm para X1–X9, 1,00 mm para U1 y las tiras, 0,80 mm para R1, C1 y C2, y 3,20 mm para el montaje. Comprueba los diámetros contra las patas y espadines reales. El [exportador](exportar_baquelita.py) coteja las redes con el esquema UART y comprueba continuidad con una pérdida de cobre simulada de 0,04 mm por borde y un margen de perforación de 0,10 mm. Para regenerar el PDF desde la raíz, ejecuta `python hardware/easyeda/exportar_baquelita.py` con ReportLab y Shapely instalados.
 
-El trazado se guardó en la placa `SmartTraffic_Shield_UNO_R3_Baquelita` del proyecto **Smart traffic**. EasyEDA mostró 10 componentes, 8/8 redes y 0 errores de DRC. El PDF descargado directamente del editor el 17 de noviembre dibujó ranuras blancas largas que interrumpen pads y pistas. Descarta esa descarga para transferir cobre. El JSON del repositorio lleva los extremos de cada perforación centrados en su pad. Está pendiente volver a aplicar esa corrección de los taladros en la nube y verificar una nueva exportación nativa.
+La PCB guardada en **Smart traffic** mostró 19 componentes, 26/26 redes y 0 errores de DRC. La máscara nativa se exportó con las capas de cobre inferior y multicapa en negro, sin espejo. A 600 ppp se cotejaron los 70 orificios y la conectividad entre todos los pares de pads con el esquema. La hoja A4 lleva una sola máscara y guías de perforación pequeñas para taladrar a mano. En ambos casos usa tamaño real. Antes de grabar, verifica la escala, el encaje en el UNO y el montaje de las piezas con la hoja A4.
 
-Para la prueba de impresión, usa el PDF A4 enlazado arriba. Se generó desde el archivo Eagle del mismo trazado. Su renderizado a 600 ppp conserva las 36 islas de cobre previstas y 52 guías de perforación individuales. Antes de grabar comprueba el encaje del papel sobre el UNO y los componentes físicos. La etapa de salida de los nueve semáforos sigue pendiente.
+### Borneras de señal X1–X9
+
+La huella elegida corresponde a **Phoenix Contact 1984617, PT 1,5/2-3,5-H**. Paso de 3,50 mm, cuerpo de 7,00 × 7,55 mm, taladro de 1,20 mm. Las seis piezas de la fila superior dejan 0,12 mm nominales entre cuerpos. Presenta las seis juntas en papel y comprueba acceso del cable y del destornillador con los conectores instalados. Las piezas de 5,00 o 5,08 mm requieren otro patrón. [Ficha del fabricante](https://www.phoenixcontact.com/en-lt/products/printed-circuit-board-terminal-pt-15-2-35-h-1984617)
+
+| Bornera | Pad 1 cuadrado | Pad 2 redondo |
+| --- | --- | --- |
+| X1 | D13 | D12 |
+| X2 | D11 | D10 |
+| X3 | D9 | D8 |
+| X4 | D7 | D6 |
+| X5 | D5 | D4 |
+| X6 | D3 | D2 |
+| X7 | A0 | A1 |
+| X8 | A2 | A3 |
+| X9 | A4 (SDA) | A5 (SCL) |
+
+D0/RX y D1/TX pasan por el traductor U1 hasta J5 y quedan reservados para el ESP32. A0 y A1 son pines diferentes. Cada tornillo de X1–X9 lleva **una señal independiente**. El par de tornillos de una bornera carece de retorno común. D13 comparte el LED integrado del UNO. A4/A5 también sirven para I²C y se previeron para supervisión. Su acceso en X9 permite medirlos. Confirma su función antes de asignarlos a luces.
+
+Las borneras entregan GPIO directos. Antes de conectar un foco comprueba polaridad, resistencia instalada, corriente por salida, por puerto y total, retorno y fuente de luces. Si la carga requiere driver, conecta la señal del borne a la entrada del driver y alimenta las luces desde la etapa dimensionada. Mantén la resistencia que ya lleva cada LED. Las luces individuales S1–S9 quedan pendientes del mapa físico y de las mediciones. S4 y S6 requieren salidas independientes.
 
 ### Encaje sobre el UNO R3
 

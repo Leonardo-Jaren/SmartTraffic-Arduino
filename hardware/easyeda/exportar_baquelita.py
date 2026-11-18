@@ -17,7 +17,7 @@ from shapely.ops import polygonize, unary_union
 BASE = Path(__file__).resolve().parent
 PCB = BASE / "SmartTraffic_Shield_UNO_R3_Baquelita.brd"
 REFERENCIA = BASE / "SmartTraffic_Shield_UNO_R3.brd"
-ESQUEMA = BASE / "SmartTraffic_Shield_UNO_R3.sch"
+ESQUEMA = PCB.with_suffix(".sch")
 PDF = BASE.parents[1] / "output" / "pdf" / "SmartTraffic_PCB_Baquelita_1_Cara_1a1.pdf"
 ANCHO, ALTO = 68.58, 53.34
 ORIGEN_X, ORIGEN_Y = (210 - ANCHO) / 2, 155
@@ -38,6 +38,15 @@ NETLIST = {
     "3V3_ESP": {"J5.2", "U1.7", "C2.1"},
     "GND": {"J3.6", "J5.1", "U1.2", "C1.2", "C2.2", "R1.2"},
     "UART_OE": {"JP1.2", "U1.6", "R1.1"},
+    "D13": {"J1.6", "X1.1"}, "D12": {"J1.5", "X1.2"},
+    "D11": {"J1.4", "X2.1"}, "D10": {"J1.3", "X2.2"},
+    "D9": {"J1.2", "X3.1"}, "D8": {"J1.1", "X3.2"},
+    "D7": {"J2.8", "X4.1"}, "D6": {"J2.7", "X4.2"},
+    "D5": {"J2.6", "X5.1"}, "D4": {"J2.5", "X5.2"},
+    "D3": {"J2.4", "X6.1"}, "D2": {"J2.3", "X6.2"},
+    "A0": {"J4.1", "X7.1"}, "A1": {"J4.2", "X7.2"},
+    "A2": {"J4.3", "X8.1"}, "A3": {"J4.4", "X8.2"},
+    "A4": {"J4.5", "X9.1"}, "A5": {"J4.6", "X9.2"},
 }
 
 
@@ -124,7 +133,7 @@ def validar():
     zona = contornos[0].buffer(-MARGEN_BORDE + 1e-7)
     montaje = unary_union([Point(punto(h)).buffer(float(h.get("drill")) / 2) for h in placa.findall("plain/hole")])
     pads, taladros = centros_y_pads(placa)
-    comprobar(len(pads) == len(taladros) == 52, "La versión de baquelita requiere 52 pads pasantes")
+    comprobar(len(pads) == len(taladros) == 70, "La variante con nueve borneras requiere 70 pads pasantes")
     senales = {s.get("name"): s for s in placa.findall("signals/signal")}
     contactos = {
         nombre: {f"{r.get('element')}.{r.get('pad')}" for r in senal.findall("contactref")}
@@ -184,9 +193,9 @@ def exportar(cobre, taladros, salida):
 
     texto(20, 277, "SMARTTRAFFIC / SHIELD ARDUINO UNO", 9, True, verde)
     texto(20, 262, "Máscara de cobre para baquelita", 22, True)
-    texto(20, 250, "Una cara · A4 · Escala 1:1 · Prototipo UART con pistas anchas", 11, color=gris)
+    texto(20, 250, "Una cara · A4 · Escala 1:1 · UART y nueve borneras de señal", 11, color=gris)
     linea(20, 243, 190, 243)
-    texto(20, 232, "Pistas de 0,60 mm. Separación mínima entre pistas de redes distintas: 1,12 mm.", 9.5)
+    texto(20, 232, "Pistas de 0,60 mm con al menos 1,10 mm entre pistas de redes distintas.", 9.5)
     texto(20, 225, "Las marcas exteriores ubican un tablero de 68,58 × 53,34 mm.", 9.5)
 
     pilotos = unary_union([centro.buffer(DIAMETRO_GUIA / 2) for centro, _ in taladros.values()])
@@ -220,12 +229,12 @@ def exportar(cobre, taladros, salida):
     texto(20, 99, "Imprime a tamaño real (100 %) y comprueba la barra de 50 mm.")
     texto(20, 92, "La vista es desde la cara sin cobre. Para transferencia por contacto,")
     texto(20, 85, "coloca el tóner hacia el cobre e imprime sin aplicar espejo adicional.")
-    texto(20, 78, "Los puntos blancos son guías. Tiras y U1 usan 1,00 mm. R1, C1 y C2 usan 0,80 mm.")
+    texto(20, 78, "Brocas: X1-X9 de 1,20 mm, tiras y U1 de 1,00 mm, R1 y condensadores de 0,80 mm.")
     texto(20, 71, "Usa la plantilla mecánica aparte para el contorno y los cuatro agujeros de 3,20 mm.")
     texto(20, 57, "Comprobación del prototipo", 12, True, verde)
     texto(20, 49, "U1 usa un adaptador VSSOP-8 a DIP-8 de 7,62 mm entre filas y paso de 2,54 mm.")
     texto(20, 42, "Monta el adaptador, R1, C1 y C2 del lado sin cobre. Alinea el pin 1 de U1 con el pad cuadrado.")
-    texto(20, 35, "Este borrador contiene la UART. Las salidas de los semáforos siguen pendientes.")
+    texto(20, 35, "X1-X9 exponen GPIO del UNO. Comprueba cargas, drivers y retorno antes de conectar luces.")
     linea(20, 22, 190, 22)
     texto(20, 15, "Arte vectorial generado desde el archivo Eagle de una cara.", 8, color=gris)
     lienzo.showPage()
@@ -238,7 +247,7 @@ def main():
     args = parser.parse_args()
     cobre, taladros, separacion = validar()
     exportar(cobre, taladros, args.output)
-    print(f"8 redes, {len(taladros)} taladros, {len(cobre)} islas de cobre, separación mínima {separacion:.3f} mm")
+    print(f"{len(NETLIST)} redes, {len(taladros)} taladros, {len(cobre)} islas de cobre, separación mínima {separacion:.3f} mm")
     print(args.output.resolve())
 
 
