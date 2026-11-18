@@ -7,7 +7,7 @@
 - [PDF A4 a escala 1:1 con un único dibujo de cobre](../../output/pdf/SmartTraffic_PCB_Baquelita_1_Cara_1a1.pdf).
 - [Vista ampliada de las pistas anchas y sus componentes](../../output/imagen/SmartTraffic_Baquelita_Pistas_Anchas.png). Las imágenes de `Vistas_SmartTraffic` muestran la revisión anterior con U1 SMD.
 
-El contorno de 68,58 × 53,34 mm, los cuatro agujeros y las posiciones de J1–J4 conservan el encaje del UNO R3. Las ocho redes UART se trazaron con pistas de **0,60 mm** en cobre inferior, sin vías ni puentes de alambre. La comprobación geométrica local verificó una separación mínima de **0,519 mm entre redes** y **0,45 mm entre el cobre y el borde**. La revisión reemplaza la versión con U1 SMD directo y el trazado con el cruce GND–ESP_TX junto a J5 que se observó en EasyEDA.
+El contorno de 68,58 × 53,34 mm, los cuatro agujeros y las posiciones de J1–J4 conservan la geometría del UNO R3 de referencia. Las ocho redes usan pistas de **0,60 mm** en cobre inferior, sin vías ni puentes de alambre. La distancia mínima de borde a borde es **1,127 mm entre pistas de redes distintas**. Al incluir las islas de soldadura, el mínimo es **0,615 mm** entre la pista de 5 V y los pads contiguos de J3. El margen al borde de la placa es de 0,45 mm. C2 se desplazó 2 mm y se simplificaron los recorridos alrededor de U1 y J5.
 
 U1 es el TXU0202DCUR montado sobre un adaptador VSSOP-8 a DIP-8 de paso 2,54 mm y 7,62 mm entre filas, como el PA0042 con pines instalados. Alinea el pin 1 del adaptador con el pad cuadrado de U1. R1 es axial de 10 kΩ con paso de 7,62 mm. C1 y C2 son cerámicos radiales de 100 nF con paso de 5,08 mm. El adaptador y los componentes pasantes se montan en la cara sin cobre. [Adaptador PA0042](https://www.proto-advantage.com/store/datasheets/PA0042.pdf)
 
@@ -15,7 +15,9 @@ Para revisar la versión nueva en EasyEDA Standard, usa **Archivo → Abrir → 
 
 La máscara incluye guías blancas de 0,30 mm. El CAD indica taladros de 1,00 mm para U1 y los conectores, 0,80 mm para R1, C1 y C2, y 3,20 mm para el montaje. Comprueba los diámetros contra las patas y espadines reales. El [exportador](exportar_baquelita.py) coteja las redes con el esquema UART y comprueba continuidad con una pérdida de cobre simulada de 0,04 mm por borde y un margen de perforación de 0,10 mm. Para regenerar el PDF desde la raíz, ejecuta `python hardware/easyeda/exportar_baquelita.py` con ReportLab y Shapely instalados.
 
-Quedan pendientes la importación y el DRC de esta variante en EasyEDA, la comprobación en baquelita y la etapa de los nueve semáforos. El diseño de dos caras que ya está guardado en el proyecto se conserva como referencia.
+El trazado se guardó en la placa `SmartTraffic_Shield_UNO_R3_Baquelita` del proyecto **Smart traffic**. EasyEDA mostró 10 componentes, 8/8 redes y 0 errores de DRC. El PDF descargado directamente del editor el 17 de noviembre dibujó ranuras blancas largas que interrumpen pads y pistas. Descarta esa descarga para transferir cobre. El JSON del repositorio lleva los extremos de cada perforación centrados en su pad. Está pendiente volver a aplicar esa corrección de los taladros en la nube y verificar una nueva exportación nativa.
+
+Para la prueba de impresión, usa el PDF A4 enlazado arriba. Se generó desde el archivo Eagle del mismo trazado. Su renderizado a 600 ppp conserva las 36 islas de cobre previstas y 52 guías de perforación individuales. Antes de grabar comprueba el encaje del papel sobre el UNO y los componentes físicos. La etapa de salida de los nueve semáforos sigue pendiente.
 
 ### Encaje sobre el UNO R3
 

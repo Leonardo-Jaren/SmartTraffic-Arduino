@@ -43,7 +43,7 @@ Sustituye `COM3` por el puerto detectado y abre **Dispositivo** en la web. La ap
 - [Plantilla para probar el encaje y registrar las mediciones](../output/pdf/SmartTraffic_Plantilla_Encaje_y_Mediciones.pdf).
 - [Esquema, PCB Eagle y módulos de referencia](../hardware/easyeda/README.md).
 
-Ambas revisiones tienen el contorno del UNO R3, los conectores de apilado y la UART. EasyEDA mostró 8/8 redes y 0 errores de DRC en la revisión de dos caras. Para la variante de baquelita se verificaron localmente las ocho redes, la continuidad y la separación de las pistas. Quedan pendientes el DRC en EasyEDA, las comprobaciones físicas y el diseño de las salidas de los nueve semáforos. El ESP32 todavía carece de firmware Wi-Fi en el repositorio.
+Ambas revisiones tienen el contorno del UNO R3, los conectores de apilado y la UART. La placa de baquelita guardada en **Smart traffic** mostró 8/8 redes y 0 errores de DRC. Sus pistas miden 0,60 mm de ancho y tienen un mínimo de 1,127 mm libres entre pistas de redes distintas. Para imprimir la prueba usa el [PDF de una cara a escala real](../output/pdf/SmartTraffic_PCB_Baquelita_1_Cara_1a1.pdf). La exportación directa de EasyEDA mostró ranuras que cortan el cobre. El JSON con la corrección de los taladros y el procedimiento de impresión están en la [guía de la placa](../hardware/easyeda/README.md). Quedan pendientes repetir la exportación nativa con esa corrección, comprobar el encaje y diseñar las salidas de los nueve semáforos. El ESP32 todavía carece de firmware Wi-Fi en el repositorio.
 
 ## Recuperar cambios de la otra laptop
 

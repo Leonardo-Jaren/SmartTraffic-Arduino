@@ -25,7 +25,8 @@ MARGEN_ATAQUE = 0.04
 TOLERANCIA_TALADRO = 0.10
 DIAMETRO_GUIA = 0.30
 ANCHO_PISTA = 0.60
-SEPARACION_MINIMA = 0.50
+SEPARACION_MINIMA = 0.60
+SEPARACION_ENTRE_PISTAS = 1.10
 MARGEN_BORDE = 0.45
 
 NETLIST = {
@@ -132,6 +133,7 @@ def validar():
     comprobar(contactos == redes_del_esquema() == NETLIST, "La placa, el esquema y el pinout UART no coinciden")
     asignados = set().union(*contactos.values())
     cobre = {nombre: forma for nombre, forma in pads.items() if nombre not in asignados}
+    trazados = {}
     for nombre, senal in senales.items():
         comprobar(all(e.tag in ("contactref", "wire") for e in senal), f"{nombre} contiene vías o cobre adicional")
         pistas = []
@@ -140,15 +142,18 @@ def validar():
             comprobar(wire.get("layer") == "16" and ancho >= ANCHO_PISTA, f"Pista incompatible en {nombre}")
             pistas.append(LineString([punto(wire, "1"), punto(wire, "2")]).buffer(ancho / 2))
         comprobar(all(zona.covers(pista) for pista in pistas), f"{nombre} se acerca al contorno")
+        trazados[nombre] = unary_union(pistas)
         cobre[nombre] = unary_union(pistas + [pads[clave] for clave in contactos[nombre]])
 
+    distancia_pistas = min(a.distance(b) for a, b in combinations(trazados.values(), 2))
+    comprobar(distancia_pistas >= SEPARACION_ENTRE_PISTAS, "Dos pistas quedan a menos de 1,10 mm")
     comprobar(all(zona.covers(forma) for forma in cobre.values()), "Hay cobre fuera del margen del borde")
     comprobar(
         all(forma.distance(montaje) >= SEPARACION_MINIMA for forma in cobre.values()),
         "Cobre cerca de un agujero de montaje",
     )
     separacion = min(a.distance(b) for a, b in combinations(cobre.values(), 2))
-    comprobar(separacion >= SEPARACION_MINIMA, "Separación entre cobres inferior a 0,50 mm")
+    comprobar(separacion >= SEPARACION_MINIMA, "Separación entre cobres inferior a 0,60 mm")
     perforaciones = unary_union([centro.buffer(radio + TOLERANCIA_TALADRO) for centro, radio in taladros.values()])
     for nombre, forma in cobre.items():
         comprobacion = forma.buffer(-MARGEN_ATAQUE).difference(perforaciones)
@@ -181,7 +186,7 @@ def exportar(cobre, taladros, salida):
     texto(20, 262, "Máscara de cobre para baquelita", 22, True)
     texto(20, 250, "Una cara · A4 · Escala 1:1 · Prototipo UART con pistas anchas", 11, color=gris)
     linea(20, 243, 190, 243)
-    texto(20, 232, "Pistas de 0,60 mm con al menos 0,50 mm entre redes distintas.", 9.5)
+    texto(20, 232, "Pistas de 0,60 mm. Separación mínima entre pistas de redes distintas: 1,12 mm.", 9.5)
     texto(20, 225, "Las marcas exteriores ubican un tablero de 68,58 × 53,34 mm.", 9.5)
 
     pilotos = unary_union([centro.buffer(DIAMETRO_GUIA / 2) for centro, _ in taladros.values()])
