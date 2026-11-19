@@ -296,6 +296,16 @@
               <pad name="2" x="1.75" y="0" drill="1.2" diameter="2.4" shape="round" />
               <text x="-1" y="1.65" size="0.8" layer="25">&gt;NAME</text>
             </package>
+            <package name="PT_1_5_2_3_5_H_SUR">
+              <wire x1="-3.5" y1="3.1" x2="3.5" y2="3.1" width="0.15" layer="21" />
+              <wire x1="3.5" y1="3.1" x2="3.5" y2="-4.45" width="0.15" layer="21" />
+              <wire x1="3.5" y1="-4.45" x2="-3.5" y2="-4.45" width="0.15" layer="21" />
+              <wire x1="-3.5" y1="-4.45" x2="-3.5" y2="3.1" width="0.15" layer="21" />
+              <wire x1="-3.5" y1="-3.2" x2="3.5" y2="-3.2" width="0.15" layer="21" />
+              <pad name="1" x="-1.75" y="0" drill="1.2" diameter="2.4" shape="square" />
+              <pad name="2" x="1.75" y="0" drill="1.2" diameter="2.4" shape="round" />
+              <text x="-1" y="-2.4" size="0.8" layer="25">&gt;NAME</text>
+            </package>
           </packages>
           <symbols>
             <symbol name="UNO_IOH">
@@ -648,6 +658,15 @@
                     <technology name="" />
                   </technologies>
                 </device>
+                <device name="SUR" package="PT_1_5_2_3_5_H_SUR">
+                  <connects>
+                    <connect gate="G$1" pin="1" pad="1" />
+                    <connect gate="G$1" pin="2" pad="2" />
+                  </connects>
+                  <technologies>
+                    <technology name="" />
+                  </technologies>
+                </device>
               </devices>
             </deviceset>
           </devicesets>
@@ -689,9 +708,9 @@
         <part name="X4" library="SmartTraffic_Shield" deviceset="BORNERA_2" device="" value="1984617" />
         <part name="X5" library="SmartTraffic_Shield" deviceset="BORNERA_2" device="" value="1984617" />
         <part name="X6" library="SmartTraffic_Shield" deviceset="BORNERA_2" device="" value="1984617" />
-        <part name="X7" library="SmartTraffic_Shield" deviceset="BORNERA_2" device="" value="1984617" />
-        <part name="X8" library="SmartTraffic_Shield" deviceset="BORNERA_2" device="" value="1984617" />
-        <part name="X9" library="SmartTraffic_Shield" deviceset="BORNERA_2" device="" value="1984617" />
+        <part name="X7" library="SmartTraffic_Shield" deviceset="BORNERA_2" device="SUR" value="1984617" />
+        <part name="X8" library="SmartTraffic_Shield" deviceset="BORNERA_2" device="SUR" value="1984617" />
+        <part name="X9" library="SmartTraffic_Shield" deviceset="BORNERA_2" device="SUR" value="1984617" />
       </parts>
       <sheets>
         <sheet>

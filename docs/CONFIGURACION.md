@@ -38,12 +38,12 @@ Sustituye `COM3` por el puerto detectado y abre **Dispositivo** en la web. La ap
 ## Abrir o imprimir la PCB
 
 - [PCB para baquelita con pistas anchas](../hardware/easyeda/SmartTraffic_Shield_UNO_R3_Baquelita_EasyEDA.json). Ábrela con **Archivo → Abrir → EasyEDA**.
-- [Máscara de cobre de una cara a escala 1:1](../output/pdf/SmartTraffic_PCB_Baquelita_1_Cara_1a1.pdf). Imprime en A4 al 100 % o tamaño real y confirma con una regla que la barra mide 50 mm. Usa la plantilla de encaje para marcar el contorno y los agujeros de montaje.
+- [Máscara de cobre de una cara a escala 1:1](../output/pdf/SmartTraffic_PCB_Baquelita_1_Cara_1a1.pdf). Imprime en A4 al 100 % o tamaño real y confirma con una regla que la barra mide 50 mm. En esa misma hoja, corta por el centro del rectángulo de 130 × 90 mm. Las cuatro cruces marcan los taladros de montaje.
 - [Archivo editable de dos caras exportado desde EasyEDA Standard](../hardware/easyeda/SmartTraffic_Shield_UNO_R3_EasyEDA.json) y su [PDF de referencia](../output/pdf/SmartTraffic_PCB_Escala_1a1.pdf).
 - [Plantilla para probar el encaje y registrar las mediciones](../output/pdf/SmartTraffic_Plantilla_Encaje_y_Mediciones.pdf).
 - [Esquema, PCB Eagle y módulos de referencia](../hardware/easyeda/README.md).
 
-La variante de baquelita usa D0/RX y D1/TX para el ESP32 mediante U1 y J5. Los pines A0/A1 aparecen en X7. Las nueve borneras X1–X9 exponen las 18 señales D2–D13 y A0–A5. La [guía de la placa](../hardware/easyeda/README.md) indica qué señal lleva cada tornillo, cómo verificar la pieza de 3,50 mm y cuáles son los pines previstos para supervisión. EasyEDA mostró 26/26 redes y cero errores. El [PDF nativo de EasyEDA](../output/pdf/SmartTraffic_Borneras_EasyEDA_1a1.pdf) y la [hoja A4 de prueba](../output/pdf/SmartTraffic_PCB_Baquelita_1_Cara_1a1.pdf) tienen un solo dibujo de cobre. El encaje, los retornos, la corriente de las luces y los drivers siguen pendientes de validación física. El ESP32 todavía carece de firmware Wi-Fi en el repositorio.
+El UNO va centrado bajo la baquelita, con seis borneras arriba, tres abajo y la interfaz UART a su derecha. La variante de baquelita usa D0/RX y D1/TX para el ESP32 mediante U1 y J5. Los pines A0/A1 aparecen en X7. Las nueve borneras X1–X9 exponen las 18 señales D2–D13 y A0–A5. La [guía de la placa](../hardware/easyeda/README.md) indica qué señal lleva cada tornillo, cómo verificar la pieza de 3,50 mm y cuáles son los pines previstos para supervisión. EasyEDA mostró 26/26 redes y cero errores. El [PDF nativo de EasyEDA](../output/pdf/SmartTraffic_Borneras_EasyEDA_1a1.pdf) y la [hoja A4 de prueba](../output/pdf/SmartTraffic_PCB_Baquelita_1_Cara_1a1.pdf) tienen un solo dibujo de cobre. El encaje, los retornos, la corriente de las luces y los drivers siguen pendientes de validación física. El ESP32 todavía carece de firmware Wi-Fi en el repositorio.
 
 ## Recuperar cambios de la otra laptop
 

@@ -11,6 +11,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 from shapely.geometry import LineString, Point, box
+from shapely.affinity import rotate, translate
 from shapely.ops import polygonize, unary_union
 
 
@@ -19,8 +20,9 @@ PCB = BASE / "SmartTraffic_Shield_UNO_R3_Baquelita.brd"
 REFERENCIA = BASE / "SmartTraffic_Shield_UNO_R3.brd"
 ESQUEMA = PCB.with_suffix(".sch")
 PDF = BASE.parents[1] / "output" / "pdf" / "SmartTraffic_PCB_Baquelita_1_Cara_1a1.pdf"
-ANCHO, ALTO = 68.58, 53.34
-ORIGEN_X, ORIGEN_Y = (210 - ANCHO) / 2, 155
+ANCHO, ALTO = 130, 90
+X_IZQUIERDO, Y_INFERIOR = -30.71, -18.33
+ORIGEN_X, ORIGEN_Y = (210 - ANCHO) / 2 - X_IZQUIERDO, 130 - Y_INFERIOR
 MARGEN_ATAQUE = 0.04
 TOLERANCIA_TALADRO = 0.10
 DIAMETRO_GUIA = 0.30
@@ -115,21 +117,49 @@ def redes_del_esquema():
     return redes
 
 
+def validar_distribucion(placa, referencia, rectangulo):
+    def contorno(placa_uno):
+        segmentos = [LineString([punto(w, "1"), punto(w, "2")]) for w in placa_uno.findall("plain/wire[@layer='20']")]
+        return next(iter(polygonize(segmentos)))
+
+    zona_uno = contorno(referencia).envelope
+    comprobar(zona_uno.centroid.distance(rectangulo.centroid) < 0.001, "El UNO debe quedar centrado")
+    borneras = []
+    for el in placa.findall("elements/element"):
+        nombre = el.get("name")
+        if nombre in {"J1", "J2", "J3", "J4"}:
+            continue
+        paquete = placa.find(f"libraries/library/packages/package[@name='{el.get('package')}']")
+        lineas = [LineString([punto(w, "1"), punto(w, "2")]) for w in paquete.findall("wire[@layer='21']")]
+        cuerpo = translate(rotate(unary_union(lineas).envelope, int(el.get("rot", "R0")[1:]), origin=(0, 0)), *punto(el))
+        comprobar(rectangulo.contains(cuerpo), f"{nombre} sobresale del corte")
+        if nombre.startswith("X"):
+            arriba = int(nombre[1:]) <= 6
+            comprobar(cuerpo.bounds[1] > zona_uno.bounds[3] if arriba else cuerpo.bounds[3] < zona_uno.bounds[1],
+                      f"{nombre} debe quedar fuera del UNO, en su fila exterior")
+            borneras.append(cuerpo)
+        else:
+            comprobar(cuerpo.bounds[0] > zona_uno.bounds[2], f"{nombre} debe quedar a la derecha del UNO")
+    comprobar(len(borneras) == 9 and all(a.distance(b) >= 2.999 for a, b in combinations(borneras, 2)),
+              "Las nueve borneras necesitan 3 mm libres entre vecinas")
+
+
 def validar():
     placa = ElementTree.parse(PCB).find("drawing/board")
     referencia = ElementTree.parse(REFERENCIA).find("drawing/board")
-    for selector in ("plain/wire[@layer='20']", "plain/hole"):
-        comprobar(
-            [n.attrib for n in placa.findall(selector)] == [n.attrib for n in referencia.findall(selector)],
-            "Cambió la geometría de apilado",
-        )
+    comprobar(
+        [n.attrib for n in placa.findall("plain/hole")] == [n.attrib for n in referencia.findall("plain/hole")],
+        "Cambiaron los agujeros de montaje del UNO",
+    )
     for ref in ("J1", "J2", "J3", "J4"):
         selector = f"elements/element[@name='{ref}']"
         comprobar(placa.find(selector).attrib == referencia.find(selector).attrib, f"Cambió la posición de {ref}")
 
     bordes = [LineString([punto(w, "1"), punto(w, "2")]) for w in placa.findall("plain/wire[@layer='20']")]
     contornos = list(polygonize(bordes))
-    comprobar(len(contornos) == 1 and contornos[0].bounds == (0, 0, ANCHO, ALTO), "Contorno inesperado")
+    rectangulo = box(X_IZQUIERDO, Y_INFERIOR, round(X_IZQUIERDO + ANCHO, 6), round(Y_INFERIOR + ALTO, 6))
+    comprobar(len(bordes) == 4 and len(contornos) == 1 and contornos[0].equals(rectangulo), "Contorno de corte inesperado")
+    validar_distribucion(placa, referencia, rectangulo)
     zona = contornos[0].buffer(-MARGEN_BORDE + 1e-7)
     montaje = unary_union([Point(punto(h)).buffer(float(h.get("drill")) / 2) for h in placa.findall("plain/hole")])
     pads, taladros = centros_y_pads(placa)
@@ -196,7 +226,7 @@ def exportar(cobre, taladros, salida):
     texto(20, 250, "Una cara · A4 · Escala 1:1 · UART y nueve borneras de señal", 11, color=gris)
     linea(20, 243, 190, 243)
     texto(20, 232, "Pistas de 0,60 mm con al menos 1,10 mm entre pistas de redes distintas.", 9.5)
-    texto(20, 225, "Las marcas exteriores ubican un tablero de 68,58 × 53,34 mm.", 9.5)
+    texto(20, 225, "Corta por el centro del rectángulo exterior de 130 × 90 mm.", 9.5)
 
     pilotos = unary_union([centro.buffer(DIAMETRO_GUIA / 2) for centro, _ in taladros.values()])
     mascara = unary_union(list(cobre.values())).difference(pilotos)
@@ -215,14 +245,19 @@ def exportar(cobre, taladros, salida):
         lienzo.drawPath(trazado, fill=1, stroke=0, fillMode=0)
     lienzo.restoreState()
 
-    for x, signo_x in ((ORIGEN_X, -1), (ORIGEN_X + ANCHO, 1)):
-        for y, signo_y in ((ORIGEN_Y, -1), (ORIGEN_Y + ALTO, 1)):
-            linea(x + signo_x * 1.8, y, x + signo_x * 5, y)
-            linea(x, y + signo_y * 1.8, x, y + signo_y * 5)
-    linea(80, 137, 130, 137, 0.8)
+    lienzo.setLineWidth(0.15 * mm)
+    lienzo.setStrokeColor(black)
+    lienzo.rect((ORIGEN_X + X_IZQUIERDO) * mm, (ORIGEN_Y + Y_INFERIOR) * mm,
+                ANCHO * mm, ALTO * mm, stroke=1, fill=0)
+    for h in ElementTree.parse(PCB).findall("drawing/board/plain/hole"):
+        x, y = punto(h)
+        x, y = ORIGEN_X + x, ORIGEN_Y + y
+        linea(x - 0.5, y, x + 0.5, y, 0.4)
+        linea(x, y - 0.5, x, y + 0.5, 0.4)
+    linea(80, 124, 130, 124, 0.8)
     for x in (80, 130):
-        linea(x, 135, x, 139)
-    texto(100, 130, "50 mm", 8.5, True)
+        linea(x, 123, x, 125)
+    texto(101, 120, "50 mm", 8.5, True)
 
     linea(20, 118, 190, 118)
     texto(20, 107, "Impresión y orientación", 12, True, verde)
@@ -230,7 +265,7 @@ def exportar(cobre, taladros, salida):
     texto(20, 92, "La vista es desde la cara sin cobre. Para transferencia por contacto,")
     texto(20, 85, "coloca el tóner hacia el cobre e imprime sin aplicar espejo adicional.")
     texto(20, 78, "Brocas: X1-X9 de 1,20 mm, tiras y U1 de 1,00 mm, R1 y condensadores de 0,80 mm.")
-    texto(20, 71, "Usa la plantilla mecánica aparte para el contorno y los cuatro agujeros de 3,20 mm.")
+    texto(20, 71, "Las cuatro cruces marcan los centros de los agujeros de montaje de 3,20 mm.")
     texto(20, 57, "Comprobación del prototipo", 12, True, verde)
     texto(20, 49, "U1 usa un adaptador VSSOP-8 a DIP-8 de 7,62 mm entre filas y paso de 2,54 mm.")
     texto(20, 42, "Monta el adaptador, R1, C1 y C2 del lado sin cobre. Alinea el pin 1 de U1 con el pad cuadrado.")
